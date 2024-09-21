@@ -30,15 +30,19 @@ void skeep_white_space (FILE * file, char * c)
     return;
 }
 
-//????????????Файлы нужно открывать в функции под задание или в main
-
-int f_r(const char * file1, const char * file2, const char * file3)
+int merge_files(const char * file1, const char * file2, const char * file3)
 {
     FILE * file1_in = fopen(file1, "r");
     FILE * file2_in = fopen(file2, "r");
     FILE * file_out = fopen(file3, "w");
     if (!(file1_in) || !(file2_in) || !(file_out))
+    {
+        fclose(file1_in);
+        fclose(file2_in);
+        fclose(file_out);
         return FILE_NOT_OPEN;
+    }
+
     char c = ' ', c_pr = ' ', a = ' ';
     FILE * file_temp = file1_in;
     int white_space = 0;
@@ -111,12 +115,17 @@ void write_to_base (int n, int q, FILE *file_out)
     fputc('0' + n % q, file_out);
 }
 
-int f_a(char * file1, char * file2)
+int change_words(char * file1, char * file2)
 {
     FILE * file_in = fopen(file1, "r");
     FILE * file_out = fopen(file2, "w");
     if (!(file_in) || !(file_out))
-        return FILE_NOT_OPEN;
+        {
+            fclose(file_in);
+            fclose(file_out);
+            return FILE_NOT_OPEN;
+        }
+
     char c = ' ';
     skeep_white_space(file_in, &c);
     int i = 1;
@@ -151,7 +160,6 @@ int f_a(char * file1, char * file2)
                     if (i % 5 == 0)
                     {
                         write_to_base(c, 8, file_out);
-                        //printf("%c = %d в ASCII преобразовании\n", c, (int)c);//???? что делать с unicode  символами
                     }
                 }
             }
@@ -173,33 +181,39 @@ int f_a(char * file1, char * file2)
 int valid(int argc, char * argv[])
 {
     if (argc < 4)
-        return FEW_ARGUMENTS;
-    printf("%ld", strlen(argv[1]));
+        {
+            return FEW_ARGUMENTS;
+        }
     if (!(((strlen(argv[1]) == 2) && ((argv[1][0] == '-') || (argv[1][0] == '/')) && ((argv[1][1] == 'a') || (argv[1][1] == 'r')))))
-        return WRONG_FLAG;
-
-
+        {
+            return WRONG_FLAG;
+        }
     if (((argv[1][1] == 'a') && (argc < 4)) || ((argv[1][1] == 'r') && (argc < 5)))
-        return FEW_ARGUMENTS;
+        {
+            return FEW_ARGUMENTS;
+        }
     if (((argv[1][1] == 'a') && (argc > 4)) || ((argv[1][1] == 'r') && (argc > 5)))
-        return TO_MUCH_ARGUMENTS;
+        {
+            return TO_MUCH_ARGUMENTS;
+        }
     return OK;
 }
 
 int main(int argc, char * argv[])
 {
-    enum err d;
+    enum err mistake;
     switch (valid(argc, argv))
     {
         case OK:
             if (argv[1][1] == 'a')
-                d = f_a(argv[2], argv[3]);
+            {
+                mistake = change_words(argv[2], argv[3]);
+            }
             if (argv[1][1] == 'r')
-                d = f_r(argv[2], argv[3], argv[4]);
-            if (d == OK)
-                printf("Программа закончила работу успешно\n");
-            else
-                printf("Файл не удалось открыть либо его название неверное\n");
+            {
+                mistake = merge_files(argv[2], argv[3], argv[4]);
+            }
+            (mistake == OK) ? printf("Программа закончила работу успешно\n") : printf("Файл не удалось открыть либо его название неверное\n");
             break;
 
         case FEW_ARGUMENTS:
