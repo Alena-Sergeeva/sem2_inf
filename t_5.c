@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <tgmath.h>
 
 enum err{
     OK,
-    FEW_ARGUMENTS,
+    CNT_ARGUMENTS,
     NOT_NUM,
-    WRONG_FLAG,
     NUM_TOO_BIG,
     WRONGE_EPS_VALUE,
     SUM_TOO_BIG
@@ -27,50 +27,59 @@ int main (int argc, char * argv[])
     switch (valid(argc, argv, &x, &eps, &fl))
     {
         case OK:
-            //printf("%Lf, %Lf\n", x, eps);
-            switch (fl)
-            {
-                case 'a':
-                    mistake = sum_a(x, eps, &res);
-                    break;
-                case 'b':
-                    mistake = sum_b(x, eps, &res);
-                    break;
-                case 'c':
-                    mistake = sum_c(x, eps, &res);
-                    break;
-                case 'd':
-                    mistake = sum_d(x, eps, &res);
-                    break;
-            }
+            printf("%Lf, %Lf\n", eps, x);
+            mistake = sum_a(x, eps, &res);
             if (mistake == SUM_TOO_BIG)
             {
-                printf("Необходимая точность не достигнута, произошло переполнение\n");
+                printf("a. Необходимая точность не достигнута, произошло переполнение\n");
             }
             else
             {
-                printf("%LE\n", res);
+                printf("a. %.15Lf\n", res);
+            }
+            mistake = sum_b(x, eps, &res);
+            if (mistake == SUM_TOO_BIG)
+            {
+                printf("b. Необходимая точность не достигнута, произошло переполнение\n");
+            }
+            else
+            {
+                printf("b. %.15Lf\n", res);
+            }
+            mistake = sum_c(x, eps, &res);
+            if (mistake == SUM_TOO_BIG)
+            {
+                printf("c. Необходимая точность не достигнута, произошло переполнение\n");
+            }
+            else
+            {
+                printf("c. %.15Lf\n", res);
+            }
+            mistake = sum_d(x, eps, &res);
+            if (mistake == SUM_TOO_BIG)
+            {
+                printf("d. Необходимая точность не достигнута, произошло переполнение\n");
+            }
+            else
+            {
+                printf("d. %.15Lf\n", res);
             }
             break;
 
-        case FEW_ARGUMENTS:
-            printf("Недостаточно аргументов командной строки\n");
-            break;
-
-        case WRONG_FLAG:
-            printf("Неверный флаг\n");
+        case CNT_ARGUMENTS:
+            printf("Неверное количество аргументов командной строки\n");
             break;
 
         case NOT_NUM:
             printf("Аргумент не является числом\n");
             break;
 
-        /*case NUM_TOO_BIG:
+        case NUM_TOO_BIG:
             printf("Произошло переполнение типа long double\n");
             break;
-        */
+
         case WRONGE_EPS_VALUE:
-            printf("eps -- должно быть неотрицательным\n");
+            printf("eps -- должно быть положительным\n");
             break;
 
     }
@@ -79,18 +88,37 @@ int main (int argc, char * argv[])
 
 int valid (int argc, char * argv[], long double *x, long double * eps, char *fl)
 {
-    if (argc < 4)
+    if (argc != 3)
     {
-        return FEW_ARGUMENTS;
+        return CNT_ARGUMENTS;
     }
-    if (!(('-' == argv[1][0]) || ('/' == argv[1][0])) || !(strstr(" a b c d ", argv[1]+1)))
-    {
-        return WRONG_FLAG;
-    }
-    * fl = argv[1][1];
-
     char * pt_stop_symbol = NULL;
+    * eps = strtold(argv[1], &pt_stop_symbol);
 
+    if ((*eps == HUGE_VALL) || (*eps == (-HUGE_VALL)))
+    {
+        return NUM_TOO_BIG;
+    }
+    if ((strcmp(argv[1], "0") != 0) && (*eps == 0))
+    {
+        return NOT_NUM;
+    }
+
+    if ((*eps == 0) && (strlen(argv[1]) != 1))
+    {
+        return NOT_NUM;
+    }
+    if (!(*(pt_stop_symbol) == '\0'))
+    {
+        return NOT_NUM;
+    }
+    if (*eps <= 0)
+    {
+        return WRONGE_EPS_VALUE;
+    }
+
+
+    pt_stop_symbol = NULL;
     * x = strtold(argv[2], &pt_stop_symbol);
     if ((*x == HUGE_VALL) || (*x == (-HUGE_VALL)))
     {
@@ -100,33 +128,10 @@ int valid (int argc, char * argv[], long double *x, long double * eps, char *fl)
     {
         return NOT_NUM;
     }
+
     if (!(*(pt_stop_symbol) == '\0'))
     {
-        printf("%s\n", pt_stop_symbol);
-
         return NOT_NUM;
-    }
-
-    * eps = strtold(argv[3], &pt_stop_symbol);
-
-    if ((*eps == HUGE_VALL) || (*eps == (-HUGE_VALL)))
-    {
-        return NUM_TOO_BIG;
-    }
-    if ((strcmp(argv[3], "0") != 0) && (*eps == 0))
-    {
-        return NOT_NUM;
-    }
-    if (!(*(pt_stop_symbol) == '\0'))
-    {
-
-        printf("%s\n", pt_stop_symbol);
-
-        return NOT_NUM;
-    }
-    if (*eps < 0)
-    {
-        return WRONGE_EPS_VALUE;
     }
 
     return 0;
@@ -134,93 +139,77 @@ int valid (int argc, char * argv[], long double *x, long double * eps, char *fl)
 
 int sum_a(long double x, long double eps, long double *res)
 {
-    long double elem_n = x, elem_pr = 1;
-    int n = 1;
-
-    //long double LONG_DOUBLE = pow(2, sizeof(long double) * 8);
-
-    //printf("%LE\n", LONG_DOUBLE);
-
-    while ((abs(elem_n - elem_pr) > eps))
+    long double elem_n = 1;
+    int n = 0;
+    *res = 1;
+    while ((fabs(elem_n) > eps))
     {
-        elem_pr = elem_n;
         elem_n *= (x / (n+1));
+        (*res) += elem_n;
         ++n;
+        //printf("%Lf\n", *res);
     }
-
-    /*
-    if (elem_n > LONG_DOUBLE / (x / (n+1)))
+    (*res) += elem_n;
+    if (isinf(elem_n))
         return SUM_TOO_BIG;
-    */
-    * res = elem_n;
+
     return 0;
 }
 
 int sum_b(long double x, long double eps, long double *res)
 {
-    long double elem_n = (((-1) * x * x))/ 2, elem_pr = 1;
-    int n = 1;
-    /*
-    long double LONG_DOUBLE = pow(2, sizeof(long double) * 8);
-    printf("%LE\n", LONG_DOUBLE);
-    */
-    while ((abs(elem_n - elem_pr) > eps))
+    long double elem_n = 1;
+    int n = 0;
+    *res = 1;
+    while ((fabs(elem_n) > eps))
     {
-        elem_pr = elem_n;
         elem_n *= (((-1) * x * x)/((2 * n + 2) * (2 * n + 1)));
+        (*res) = (*res) + elem_n;
         ++n;
+        //printf("%Lf\n", *res);
     }
-    /*
-    printf("%LE\n", elem_n);
-    printf("%LE\n", LONG_DOUBLE / (((-1) * x * x)/((2 * n + 2) * (2 * n + 1))));
-    if (abs(elem_n) > abs(LONG_DOUBLE / (((-1) * x * x)/((2 * n + 2) * (2 * n + 1)))))
+    (*res) += elem_n;
+    if (isinf(*res))
         return SUM_TOO_BIG;
-    */
 
-    * res = elem_n;
     return 0;
 }
 
+// ряд сходится при только при |x|<1
 int sum_c(long double x, long double eps, long double *res)
 {
-    long double elem_n = (9*x*x)/2, elem_pr = 1;
-    int n = 1;
-
-    //long double LONG_DOUBLE = pow(2, sizeof(long double) * 8);
-
-    while (abs(elem_n - elem_pr) > eps)
+    long double elem_n = 1;
+    int n = 0;
+    while ((fabs(elem_n) > eps) && (!isinf(*res)) && (!isnanl(*res)))
     {
-        elem_pr = elem_n;
         elem_n *= ((9 * (n + 1) * (n + 1) * x * x)/((3 * n + 2)* (3 * n + 1)));
         ++n;
+        (*res)+=elem_n;
+        //printf("%LE\n", *res);
     }
-    /*
-    if (elem_n > LONG_DOUBLE / ((9 * (n + 1) * (n + 1) * x * x)/((3 * n + 2)* (3 * n + 1))))
+    (*res) += elem_n;
+    if ((isinf(*res)) || (isnanl(*res)))
         return SUM_TOO_BIG;
-    */
 
-    * res = elem_n;
     return 0;
 }
 
 int sum_d(long double x, long double eps, long double *res)
 {
-    long double elem_n = (3 * x * x * x * x) / 8, elem_pr = ((-1) * (x * x)) / 2;
-    int n = 2;
-    long double x_pw_2 = x * x * (-1);
+    long double elem_n = ((-1) * (x * x)) / 2;
+    int n = 1;
 
-    //long double LONG_DOUBLE = pow(2, sizeof(long double) * 8);
-    while (abs(elem_n - elem_pr) > eps)
+    while ((fabs(elem_n) > eps) && (!isinf(*res)) && (!isnanl(*res)))
     {
-        elem_pr = elem_n;
-        elem_n *= ((x_pw_2 * (n + 0.5))/ (n+1)) ;
+        elem_n *= ((x * x * (-1) * (n + 0.5))/ (n+1)) ;
         ++n;
+        (*res) += elem_n;
+        //printf("%Lf\n", *res);
     }
+    (* res) += elem_n;
 
-    //if (elem_n > LONG_DOUBLE / ((x_pw_2 * (n + 0.5))/ (n+1)))
-    //    return SUM_TOO_BIG;
-
-    * res = elem_n;
+    if ((isinf(*res)) || (isnanl(*res)))
+        return SUM_TOO_BIG;
 
     return 0;
 }
