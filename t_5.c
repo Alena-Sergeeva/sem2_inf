@@ -71,7 +71,7 @@ int main (int argc, char * argv[])
             break;
 
         case NOT_NUM:
-            printf("Аргумент не является числом\n");
+            printf("Аргумент не является числом, либо произошла потяря значимости\n");
             break;
 
         case NUM_TOO_BIG:
@@ -94,7 +94,6 @@ int valid (int argc, char * argv[], long double *x, long double * eps, char *fl)
     }
     char * pt_stop_symbol = NULL;
     * eps = strtold(argv[1], &pt_stop_symbol);
-
     if ((*eps == HUGE_VALL) || (*eps == (-HUGE_VALL)))
     {
         return NUM_TOO_BIG;
@@ -136,7 +135,7 @@ int valid (int argc, char * argv[], long double *x, long double * eps, char *fl)
 
     return 0;
 }
-
+//e^x
 int sum_a(long double x, long double eps, long double *res)
 {
     long double elem_n = 1;
@@ -155,7 +154,7 @@ int sum_a(long double x, long double eps, long double *res)
 
     return 0;
 }
-
+//cosx
 int sum_b(long double x, long double eps, long double *res)
 {
     long double elem_n = 1;
