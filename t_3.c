@@ -4,11 +4,11 @@
 #include <string.h>
 #include <limits.h>
 
-
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-enum err{
+enum err
+{
     OK,
     NOT_NUM,
     WRONG_FLAG,
@@ -26,27 +26,17 @@ enum err{
 };
 
 int solve_quadratic_equation(double eps, double a, double b, double c, double *res1, double *res2);
-void print_res(int mistake, double res1, double res2);
+void print_res(int mistake, double res1, double res2, double a, double b, double c);
 
-int multiples(long int num1, long int num2, int * f);
+int multiples(long int num1, long int num2, int *f);
 int is_right_triangle(double eps, double a, double b, double c, int *f);
 
-int is_db_correct(char * argv, double * a);
-int is_li_correct(char * argv, long int * a);
-int valid (int argc, char * argv[], double *eps, double * a, double * b, double * c, long int * num_1, long int * num_2);
+int is_db_correct(char *argv, double *a);
+int is_li_correct(char *argv, long int *a);
+int valid(int argc, char *argv[], double *eps, double *a, double *b, double *c, long int *num_1, long int *num_2);
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-    /*int k = 0;
-    is_right_triangle(0.001, 4.0001, 5, 3, &k);
-    printf("%d\n", k);
-    multiples(-2, 4, &k);
-    printf("%d\n", k);
-    double res1 = 0.0, res2 = 0.0;
-    int mistake = solve_quadratic_equation(0.0001, -3, 4, -2, &res1, &res2);
-    printf("%lf %lf\n", res1, res2);
-    mistake = solve_quadratic_equation(0.0001, 0, 0, 0.00001, &res1, &res2);
-    printf("%lf %lf %d\n", res1, res2, mistake);*/
     double eps, a, b, c;
     long int num1, num2;
     enum err mistake = 0;
@@ -54,89 +44,88 @@ int main(int argc, char * argv[])
     int f = 0;
     switch (valid(argc, argv, &eps, &a, &b, &c, &num1, &num2))
     {
-        case OK:
-            printf("%lf %lf %lf %lf %ld %ld\n", eps, a, b, c, num1, num2);
-            switch (argv[1][1])
+    case OK:
+        printf("%lf %lf %lf %lf %ld %ld\n", eps, a, b, c, num1, num2);
+        switch (argv[1][1])
+        {
+        case 'q':
+            mistake = solve_quadratic_equation(eps, a, b, c, &res1, &res2);
+            print_res(mistake, res1, res2, a, b, c);
+            mistake = solve_quadratic_equation(eps, c, a, b, &res1, &res2);
+            print_res(mistake, res1, res2, c, a, b);
+            mistake = solve_quadratic_equation(eps, b, c, a, &res1, &res2);
+            print_res(mistake, res1, res2, b, c, a);
+            break;
+        case 'm':
+            multiples(num1, num2, &f);
+            if (f == 0)
             {
-                case 'q':
-                    mistake = solve_quadratic_equation(eps, a, b, c, &res1, &res2);
-                    print_res(mistake, res1, res2);
-                    mistake = solve_quadratic_equation(eps, c, a, b, &res1, &res2);
-                    print_res(mistake, res1, res2);
-                    mistake = solve_quadratic_equation(eps, b, c, a, &res1, &res2);
-                    print_res(mistake, res1, res2);
-                    break;
-                case 'm':
-                    multiples(num1, num2, &f);
-                    if (f == 0)
-                    {
-                        printf("Первое число не кратно второму\n");
-                    }
-                    else
-                    {
-                        printf("Первое число кратно второму\n");
-                    }
-                    break;
-                case 't':
-                    if (is_right_triangle(eps, a, b, c, &f) == NEGATIV_SIDE)
-                    {
-                        printf("Стороны треугольника должны быть больше 0\n");
-                    }
-                    else
-                    {
-                        if (f == 0)
-                        {
-                            printf("Не является прямым трегольником\n");
-                        }
-                        else
-                        {
-                            printf("Прямой треугольник\n");
-                        }
-                    }
-                    break;
-
+                printf("Первое число не кратно второму\n");
+            }
+            else
+            {
+                printf("Первое число кратно второму\n");
+            }
+            break;
+        case 't':
+            if (is_right_triangle(eps, a, b, c, &f) == NEGATIV_SIDE)
+            {
+                printf("Стороны треугольника должны быть больше 0\n");
+            }
+            else
+            {
+                if (f == 0)
+                {
+                    printf("Не является прямым трегольником\n");
                 }
-                break;
+                else
+                {
+                    printf("Прямой треугольник\n");
+                }
+            }
+            break;
+        }
+        break;
 
-            case NOT_NUM_L_INT:
-                printf("Аргумент не является десятичным числлом\n");
-                break;
+    case NOT_NUM_L_INT:
+        printf("Аргумент не является десятичным числлом\n");
+        break;
 
-            case NOT_NUM:
-                printf("Аргумент не является числом\n");
-                break;
+    case NOT_NUM:
+        printf("Аргумент не является числом\n");
+        break;
 
-            case OVERFLOW_L_INT:
-                printf("Переполнение типа long int\n");
-                break;
+    case OVERFLOW_L_INT:
+        printf("Переполнение типа long int\n");
+        break;
 
-            case OVERFLOW_DUB:
-                printf("Переполнение типа double\n");
-                break;
+    case OVERFLOW_DUB:
+        printf("Переполнение типа double\n");
+        break;
 
-            case NOT_NUM_LOOSE_MEAN:
-                printf("Аргумент не является числом или произошла потеря значимости\n");
-                break;
+    case NOT_NUM_LOOSE_MEAN:
+        printf("Аргумент не является числом или произошла потеря значимости\n");
+        break;
 
-            case WRONG_FLAG:
-                printf("Неверный флаг\n");
-                break;
+    case WRONG_FLAG:
+        printf("Неверный флаг\n");
+        break;
 
-            case CNT_ARGUMENTS:
-                printf("Неверное количество аргументов\n");
-                break;
+    case CNT_ARGUMENTS:
+        printf("Неверное количество аргументов\n");
+        break;
 
-            case WRONGE_EPS_VALUE:
-                printf("eps - должно быть положительным числом\n");
-                break;
-
+    case WRONGE_EPS_VALUE:
+        printf("eps - должно быть положительным числом\n");
+        break;
     }
 
     return 0;
 }
 
-void print_res(int mistake, double res1, double res2)
+void print_res(int mistake, double res1, double res2, double a, double b, double c)
 {
+    printf("%lfx^2+%lfx + %lf = 0\t", a, b, c);
     if (mistake == OK)
     {
         printf("%lf %lf\n", res1, res2);
@@ -155,39 +144,38 @@ void print_res(int mistake, double res1, double res2)
     }
     if (mistake == NOT_quadratic_equation)
     {
-        printf("%lf не является квадратным уравнением\n", res1);
+        printf("%lf (не является квадратным уравнением)\n", res1);
     }
 }
 
 int solve_quadratic_equation(double eps, double a, double b, double c, double *res1, double *res2)
 {
     double d = b * b - 4 * a * c;
-    //printf("%lf\n", b * b - 4 * a * c);
-    //if (d < eps)
-
-    if (d < 0)
+    if (d < eps)
     {
         return NOT_SOLVE;
     }
     if (fabs(a) < eps)
     {
-        //bx + c = 0
         if ((fabs(c) < eps) && (fabs(b) < eps))
+        {
             return ANY;
+        }
         if ((fabs(b) < eps) && !(fabs(c) < eps))
+        {
             return NOT_SOLVE;
-        (fabs(c) < eps) ? (*res1 = 0.0) : (*res1 = (c*(-1 ))/ b);
+        }
+        (fabs(c) < eps) ? (*res1 = 0.0) : (*res1 = (c * (-1)) / b);
         return NOT_quadratic_equation;
     }
-    *res1 = ((-1) * b + pow(d, 0.5))/ (2 * a);
-    *res2 = ((-1) * b - pow(d, 0.5))/ (2 * a);
+    *res1 = ((-1) * b + pow(d, 0.5)) / (2 * a);
+    *res2 = ((-1) * b - pow(d, 0.5)) / (2 * a);
     if (fabs(*res1 - *res2) < eps)
     {
         return ONE_SOLVE;
     }
     return 0;
 }
-
 
 /*
  -m необходимо задать два ненулевых целых числа, после чего определить, кратно
@@ -199,7 +187,7 @@ int multiples(long int num1, long int num2, int *f)
     return 0;
 }
 /*
--t первый пар аметр (вещественное число) задаёт точность сравнения вещественных
+-t первый параметр (вещ. число) задаёт точность сравнения вещественных
 чисел (эпсилон); необходимо проверить, могут ли оставшиеся три (вещественные
 числа) параметра являться длинами сторон прямоугольного треугольника.
 */
@@ -211,11 +199,7 @@ int is_right_triangle(double eps, double a, double b, double c, int *f)
     double min_side = min(min(a, b), min(b, c));
     double sr_side = a + b + c - min_side - max_side;
 
-    //printf("%lf %lf %lf\n", max_side, sr_side, min_side);
-
     (fabs(min_side * min_side + sr_side * sr_side - max_side * max_side) < eps) ? (*f = 1) : (*f = 0);
-
-    //printf("%lf\n", min_side * min_side + sr_side * sr_side - max_side * max_side);
     return 0;
 }
 
@@ -223,18 +207,19 @@ void len(long int x, int *i)
 {
     if ((x < 0) || (x == 0))
     {
-        ++ (*i);
+        ++(*i);
         x = abs(x);
     }
-    while (x > 0){
+    while (x > 0)
+    {
         x /= 10;
         ++(*i);
     }
 }
 
-int is_li_correct(char * argv, long int * x)
+int is_li_correct(char *argv, long int *x)
 {
-    char * end_num = NULL;
+    char *end_num = NULL;
     *x = strtol(argv, &end_num, 10);
     int len_x = 0;
     len(*x, &len_x);
@@ -250,10 +235,10 @@ int is_li_correct(char * argv, long int * x)
     return OK;
 }
 
-int is_db_correct(char * argv, double * a)
+int is_db_correct(char *argv, double *a)
 {
-    char * pt_stop_symbol = NULL;
-    * a = strtold(argv, &pt_stop_symbol);
+    char *pt_stop_symbol = NULL;
+    *a = strtold(argv, &pt_stop_symbol);
     if ((*a == HUGE_VALL) || (*a == (-HUGE_VALL)))
     {
         return OVERFLOW_DUB;
@@ -274,13 +259,13 @@ int is_db_correct(char * argv, double * a)
     return OK;
 }
 
-int valid (int argc, char * argv[], double *eps, double * a, double * b, double * c, long int * num_1, long int * num_2)
+int valid(int argc, char *argv[], double *eps, double *a, double *b, double *c, long int *num_1, long int *num_2)
 {
     if (argc < 4)
     {
         return CNT_ARGUMENTS;
     }
-    if (!((argv[1][0] == '-' || argv[1][0] == '/') && strstr(" q m t ", argv[1]+1) && (strlen(argv[1])== 2)))
+    if (!((argv[1][0] == '-' || argv[1][0] == '/') && strstr(" q m t ", argv[1] + 1) && (strlen(argv[1]) == 2)))
     {
         return WRONG_FLAG;
     }
