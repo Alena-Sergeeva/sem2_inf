@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 enum err
 {
@@ -32,94 +33,93 @@ int replace_not_num_to_base16(const char *, const char *);
 */
 int creat_file_name(const char *, char *);
 
-int valid(int argc, char * argv[], char * * pt_fl_in, char *pt_fl_out);
+int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out);
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-    char * pt_fl_in = NULL;
+    char *pt_fl_in = NULL;
     char pt_fl_out[256];
     enum err file_error;
     switch (valid(argc, argv, &pt_fl_in, pt_fl_out))
     {
-        case OK:
-            //printf("%s-входной файл\n%s-выходной файл\n", pt_fl_in, pt_fl_out);
-            switch (argv[1][strlen(argv[1])-1])
-            {
-                case 'd':
-                    file_error = put_away_num(pt_fl_in, pt_fl_out);
-                    break;
-
-                case 'i':
-                    file_error = cnt_latin_letter(pt_fl_in, pt_fl_out);
-                    break;
-
-                case 's':
-                    file_error = cnt_symb(pt_fl_in, pt_fl_out);
-                    break;
-
-                case 'a':
-                    file_error = replace_not_num_to_base16(pt_fl_in, pt_fl_out);
-                    break;
-
-            }
-            if (file_error == FILE_INPUT_NOT_OPEN)
-            {
-                printf("Входной файл не открылся или был не найден\n");
-            }
-            if (file_error == FILE_OUTPUT_NOT_OPEN)
-            {
-                printf("Выходной файл не открылся, либо не удалось сосздать\n");
-            }
-            if (file_error == OK)
-            {
-                printf("Программа отработала успешно\n");
-            }
+    case OK:
+        // printf("%s-входной файл\n%s-выходной файл\n", pt_fl_in, pt_fl_out);
+        switch (argv[1][strlen(argv[1]) - 1])
+        {
+        case 'd':
+            file_error = put_away_num(pt_fl_in, pt_fl_out);
             break;
 
-        case FEW_ARGUMENTS:
-            printf("Недостаточно аргументов командной строки\n");
+        case 'i':
+            file_error = cnt_latin_letter(pt_fl_in, pt_fl_out);
             break;
 
-        case WRONG_FLAG:
-            printf("Неверный флаг\n");
+        case 's':
+            file_error = cnt_symb(pt_fl_in, pt_fl_out);
             break;
 
-        case TOO_LONG_FILE_NAME:
-            printf("При генерации имени выходного файла была превышена его длина\n");
+        case 'a':
+            file_error = replace_not_num_to_base16(pt_fl_in, pt_fl_out);
             break;
+        }
+        if (file_error == FILE_INPUT_NOT_OPEN)
+        {
+            printf("Входной файл не открылся или был не найден\n");
+        }
+        if (file_error == FILE_OUTPUT_NOT_OPEN)
+        {
+            printf("Выходной файл не открылся, либо не удалось сосздать\n");
+        }
+        if (file_error == OK)
+        {
+            printf("Программа отработала успешно\n");
+        }
+        break;
+
+    case FEW_ARGUMENTS:
+        printf("Недостаточно аргументов командной строки\n");
+        break;
+
+    case WRONG_FLAG:
+        printf("Неверный флаг\n");
+        break;
+
+    case TOO_LONG_FILE_NAME:
+        printf("При генерации имени выходного файла была превышена его длина\n");
+        break;
     }
 
     return 0;
 }
 
-int creat_file_name(const char * pt_fl_in, char * pt_fl_out)
+int creat_file_name(const char *pt_fl_in, char *pt_fl_out)
 {
     int len_fl_in = strlen(pt_fl_in);
-    //printf("%s\n", pt_fl_in);
+    // printf("%s\n", pt_fl_in);
     int len_fl_name = 0;
     char pr[] = "out_";
     int len_pr = strlen(pr);
 
     int j = 0;
-    while ((len_fl_in - len_fl_name -1 >= 0) && (pt_fl_in[len_fl_in - 1 - len_fl_name] != '/'))
+    while ((len_fl_in - len_fl_name - 1 >= 0) && (pt_fl_in[len_fl_in - 1 - len_fl_name] != '/'))
     {
         ++len_fl_name;
     }
     if (len_pr + len_fl_name > 255)
         return TOO_LONG_FILE_NAME;
-    //printf("%d", len_fl_name);
+    // printf("%d", len_fl_name);
     for (j = 0; j < len_pr; ++j)
     {
         pt_fl_out[j] = pr[j];
     }
-    for (j = 0; j < len_fl_name + len_pr+ 1; ++j)
+    for (j = 0; j < len_fl_name + len_pr + 1; ++j)
     {
-        pt_fl_out[len_pr + j] = pt_fl_in[len_fl_in - len_fl_name  + j];
+        pt_fl_out[len_pr + j] = pt_fl_in[len_fl_in - len_fl_name + j];
     }
     return 0;
 }
 
-int valid(int argc, char * argv[], char * * pt_fl_in, char *pt_fl_out)
+int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out)
 {
     if (argc < 3)
     {
@@ -137,25 +137,25 @@ int valid(int argc, char * argv[], char * * pt_fl_in, char *pt_fl_out)
     if ((argv[1][1] == 'n') && strstr(" d i s a ", argv[1] + 2))
     {
         if (argc < 4)
-            return FEW_ARGUMENTS;//не введен входной файл
+            return FEW_ARGUMENTS; // не введен входной файл
         *(pt_fl_in) = argv[3];
         strcpy(pt_fl_out, argv[2]);
         //????? не понимаю каким аргументом по счету подается входной файл
         return OK;
     }
-    *( pt_fl_in) = argv[2];
+    *(pt_fl_in) = argv[2];
     return creat_file_name(*pt_fl_in, pt_fl_out);
 }
 
-int put_away_num(const char * f_in, const char * f_out)
+int put_away_num(const char *f_in, const char *f_out)
 {
     char c;
-    FILE * fin = fopen(f_in, "r");
+    FILE *fin = fopen(f_in, "r");
     if (fin == NULL)
     {
         return FILE_INPUT_NOT_OPEN;
     }
-    FILE * fout = fopen(f_out, "w+");
+    FILE *fout = fopen(f_out, "w+");
     if (!fout)
     {
         fclose(fin);
@@ -174,10 +174,10 @@ int put_away_num(const char * f_in, const char * f_out)
     return 0;
 }
 
-int cnt_latin_letter(const char * f_in, const char * f_out)
+int cnt_latin_letter(const char *f_in, const char *f_out)
 {
-    FILE * fin = fopen(f_in, "r");
-    FILE * fout = fopen(f_out, "w+");
+    FILE *fin = fopen(f_in, "r");
+    FILE *fout = fopen(f_out, "w+");
     char c = ' ';
     if (!fin)
     {
@@ -190,7 +190,7 @@ int cnt_latin_letter(const char * f_in, const char * f_out)
         return FILE_OUTPUT_NOT_OPEN;
     }
     char buf[256];
-    while(fgets(buf, 256, fin) != NULL)
+    while (fgets(buf, 256, fin) != NULL)
     {
         int cnt = 0;
         for (int i = 0; i < strlen(buf); ++i)
@@ -207,32 +207,30 @@ int cnt_latin_letter(const char * f_in, const char * f_out)
     fclose(fout);
     return 0;
 }
-int cnt_symb(const char * f_in, const char * f_out)
+int cnt_symb(const char *f_in, const char *f_out)
 {
-    FILE * fin = fopen(f_in, "r");
+    FILE *fin = fopen(f_in, "r");
     if (fin == NULL)
     {
         return FILE_INPUT_NOT_OPEN;
     }
-    FILE * fout = fopen(f_out, "w+");
+    FILE *fout = fopen(f_out, "w+");
     if (!fout)
     {
         fclose(fin);
         return FILE_OUTPUT_NOT_OPEN;
     }
     char buf[256];
-
-    while(fgets(buf, 256, fin) != NULL)
+    while (fgets(buf, 256, fin) != NULL)
     {
         int cnt = 0;
         printf("%s\n", buf);
         for (int i = 0; i < strlen(buf); ++i)
-        {
-            if (!(((buf[i] >= 'A') && (buf[i] <= 'Z')) || ((buf[i] >= 'a') && (buf[i] <= 'z')) || ((buf[i] <= '9') && (buf[i]>='0')) || (buf[i] == ' ')))
+        { // Считаются также символы переноса строки, табуляции, переноса каретки и другие
+            if (!(isalnum(buf[i]) || (buf[i] == ' ')))
             {
-                printf("%d\n", buf[i]);
                 ++cnt;
-        // Считаются также символы переноса строки, табуляции, переноса каретки и другие
+                printf("%d\n", buf[i]);
             }
         }
         fprintf(fout, "%d\n", cnt);
@@ -243,14 +241,14 @@ int cnt_symb(const char * f_in, const char * f_out)
     return 0;
 }
 
-int replace_not_num_to_base16(const char * f_in, const char * f_out)
+int replace_not_num_to_base16(const char *f_in, const char *f_out)
 {
-    FILE * fin = fopen(f_in, "r");
+    FILE *fin = fopen(f_in, "r");
     if (fin == NULL)
     {
         return FILE_INPUT_NOT_OPEN;
     }
-    FILE * fout = fopen(f_out, "w+");
+    FILE *fout = fopen(f_out, "w+");
     if (!fout)
     {
         fclose(fin);
