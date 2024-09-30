@@ -11,7 +11,6 @@ enum err
     NOT_NUM,
     NUM_TOO_BIG,
     WRONGE_EPS_VALUE,
-    SUM_TOO_BIG,
     SERIES_DIVERGES
 };
 int valid(int, char *[], long double *, long double *, char *);
@@ -43,14 +42,13 @@ int main(int argc, char *argv[])
         {
             printf("c. %.15Lf\n", res);
         }
-        mistake = sum_d(x, eps, &res);
-        if (mistake == SUM_TOO_BIG)
+        if (mistake == SERIES_DIVERGES)
         {
-            printf("d. Необходимая точность не достигнута, произошло переполнение\n");
+            printf("d. Ряд рассходится\n");
         }
         else
         {
-            printf("d. %.15Lf\n", res);
+            printf("c. %.15Lf\n", res);
         }
         break;
 
@@ -124,19 +122,16 @@ int valid(int argc, char *argv[], long double *x, long double *eps, char *fl)
 // e^x
 int sum_a(long double x, long double eps, long double *res)
 {
-    long double elem_n = 1;
+    long double elem_n = 1.0;
     int n = 0;
     *res = 1;
     while ((fabs(elem_n) > eps))
     {
-        elem_n *= (x / (n + 1));
+        elem_n *= (x / (n + 1.0));
         (*res) += elem_n;
         ++n;
-        // printf("%Lf\n", *res);
     }
     (*res) += elem_n;
-    if (isinf(elem_n))
-        return SUM_TOO_BIG;
 
     return 0;
 }
@@ -148,14 +143,11 @@ int sum_b(long double x, long double eps, long double *res)
     *res = 1;
     while ((fabs(elem_n) > eps))
     {
-        elem_n *= (((-1) * x * x) / ((2 * n + 2) * (2 * n + 1)));
+        elem_n *= (((-1.0) * x * x) / ((2.0 * n + 2.0) * (2.0 * n + 1.0)));
         (*res) = (*res) + elem_n;
         ++n;
-        // printf("%Lf\n", *res);
     }
     (*res) += elem_n;
-    if (isinf(*res))
-        return SUM_TOO_BIG;
 
     return 0;
 }
@@ -165,40 +157,35 @@ int sum_c(long double x, long double eps, long double *res)
 {
     long double elem_n = 1;
     int n = 0;
-    if (fabs(x * x) >= 1)
+    if (fabs(x) >= 1)
     {
         return SERIES_DIVERGES;
     }
-    while ((fabs(elem_n) > eps) && (!isinf(*res)) && (!isnanl(*res)))
+    while (fabs(elem_n) > eps)
     {
-        elem_n *= ((9 * (n + 1) * (n + 1) * x * x) / ((3 * n + 2) * (3 * n + 1)));
+        elem_n *= ((9.0 * (n + 1.0) * (n + 1.0) * x * x) / ((3.0 * n + 2.0) * (3.0 * n + 1.0)));
         ++n;
         (*res) += elem_n;
     }
     (*res) += elem_n;
-    if ((isinf(*res)) || (isnanl(*res)))
-        return SUM_TOO_BIG;
-
     return 0;
 }
 
 // не понимаю
 int sum_d(long double x, long double eps, long double *res)
 {
-    long double elem_n = ((-1) * (x * x)) / 2;
+    long double elem_n = ((-1) * (x * x)) / 2.0;
     int n = 1;
-
-    while ((fabs(elem_n) > eps) && (!isinf(*res)) && (!isnanl(*res)))
+    if (fabs(x) >= 1)
     {
-        elem_n *= ((x * x * (-1) * (2 * n + 1)) / (2 * n + 2));
+        return SERIES_DIVERGES;
+    }
+    while (fabs(elem_n) > eps)
+    {
+        elem_n *= ((x * x * (-1) * (2.0 * n + 1.0)) / (2.0 * n + 2.0));
         ++n;
         (*res) += elem_n;
-        // printf("%Lf\n", *res);
     }
     (*res) += elem_n;
-
-    if ((isinf(*res)) || (isnanl(*res)))
-        return SUM_TOO_BIG;
-
     return 0;
 }
