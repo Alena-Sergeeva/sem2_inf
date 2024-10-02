@@ -84,9 +84,9 @@ void full_massive_rand_numb(long int a, long int b, long int *massive, int size)
 
 void find_change_max_min_elem(long int *a, int size)
 {
-    int max_i = 0, min_i = 0, i = 0;
+    int max_i = 0, min_i = 0;
     long int max_num = LONG_MIN, min_num = LONG_MAX, temp = 0;
-    for (i; i < size; ++i)
+    for (int i = 0; i < size; ++i)
     {
         if (a[i] > max_num)
         {
@@ -113,25 +113,6 @@ void find_change_max_min_elem(long int *a, int size)
 массива В (если ближайших по значению элементов несколько, допустимо добавление
 любого из них).
 */
-int creat_dinamic_massive(long int **A, long int **B, int *size_a, int *size_b)
-{
-    *size_a = 10 + rand() % (10000 - 10 + 1);
-    //*size_a = 5 + rand() % (10 - 5 + 1);
-    if (!(*A = (long int *)malloc(sizeof(long int) * (*size_a))))
-    {
-        return MEMORY_ERROR;
-    }
-    *size_b = 10 + rand() % (10000 - 10 + 1);
-    //*size_b = 5 + rand() % (10 - 5 + 1);
-    if (!(*B = (long int *)malloc(sizeof(long int) * (*size_b))))
-    {
-        free(*A);
-        return MEMORY_ERROR;
-    }
-    full_massive_rand_numb(-1000, 1000, *A, *size_a);
-    full_massive_rand_numb(-1000, 1000, *B, *size_b);
-    return 0;
-}
 int max(const void *a, const void *b)
 {
     return (*(long int *)a - *(long int *)b);
@@ -146,35 +127,61 @@ void print_massive(long int *a, long int size)
     printf("\n");
 }
 
-int merge_A_B(long int **C, int *size_c, long int *A, int size_a, long int *B, int size_b, int min_ras)
+int merge_A_B(long int **C, int *size_c)
 {
-    *size_c = size_a;
-    *C = (long int *)malloc(sizeof(long int) * (*size_c));
-    if (!(*C))
+    long int *A = NULL, *B = NULL;
+    int size_a, size_b;
+    //*size_a = 10 + rand() % (10 - 1000 + 1);
+    size_a = 5 + rand() % (10 - 5 + 1);
+    if (!(A = (long int *)malloc(sizeof(long int) * (size_a))))
     {
         return MEMORY_ERROR;
     }
-
-    qsort(A, size_a, sizeof(long int), max);
-    qsort(B, size_b, sizeof(long int), max);
-    int i = 0, j = 0, k = 0, min_ras_1 = min_ras, close_num = 0;
-    while ((i < size_a) && (k < *size_c))
+    //*size_b = 10 + rand() % (10 - 10 + 1);
+    size_b = 5 + rand() % (10 - 5 + 1);
+    if (!(B = (long int *)malloc(sizeof(long int) * (size_b))))
     {
-        if (abs(A[i] - B[j]) < min_ras_1)
-        {
-            min_ras_1 = abs(A[i] - B[j]);
-            close_num = B[j];
-            ++j;
-        }
-        else
-        {
-            *(*C + k) = A[i] + close_num;
-            ++k;
-            ++i;
-            --j;
-            min_ras_1 = min_ras;
-        }
+        free(A);
+        A = NULL;
+        return MEMORY_ERROR;
     }
+    full_massive_rand_numb(-1000, 1000, A, size_a);
+    full_massive_rand_numb(-1000, 1000, B, size_b);
+
+    *size_c = size_a;
+    if (!(*C = (long int *)malloc(sizeof(long int) * (size_a))))
+    {
+        free(A);
+        free(B);
+        A = NULL;
+        B = NULL;
+        return MEMORY_ERROR;
+    }
+    printf("Массив А: ");
+    print_massive(A, size_a);
+    printf("Массив B: ");
+    print_massive(B, size_b);
+    qsort(B, size_b, sizeof(long int), max);
+    int i = 0;
+    // print_massive(B, size_b);
+    long int *pt_A = A;
+    while (pt_A - A < size_a)
+    {
+        int r = size_b - 1, l = 0, m = 1;
+        // printf("%ld\n", *pt_A);
+        while (r - l > 1)
+        {
+            m = l + (r - l) / 2;
+            (*pt_A < *(B + m)) ? (r = m) : (l = m);
+            // printf("%ld %ld \n", *(*B + l), *(*B + r));
+        }
+        *(*C + (pt_A - A)) = *pt_A + ((abs(*(B + r) - *pt_A)) < (abs(*pt_A - *(B + l))) ? (*(B + r)) : (*(B + l)));
+        ++pt_A;
+    }
+    free(A);
+    free(B);
+    A = NULL;
+    B = NULL;
     return 0;
 }
 
@@ -185,7 +192,6 @@ int main(int argc, char *argv[])
     long int a, b;
     int size_a = 0, size_b = 0, size_c = 0;
     long int *A = NULL, *B = NULL, *C = NULL;
-    enum err mistake1 = 0, mistake2 = 0;
     switch (valid(argc, argv, &a, &b))
     {
     case OK:
@@ -195,26 +201,18 @@ int main(int argc, char *argv[])
         find_change_max_min_elem(m, N);
         printf("Массив после обработки: ");
         print_massive(m, N);
+        printf("\nВторая функция:\n");
 
-        if (creat_dinamic_massive(&A, &B, &size_a, &size_b) == MEMORY_ERROR)
+        if (merge_A_B(&C, &size_c) == MEMORY_ERROR)
         {
             printf("Не удалось выделить мапять");
         }
         else
         {
-            printf("Вторая функция:\nисходный массив A: ");
-            print_massive(A, size_a);
-            printf("исходный массив B: ");
-            print_massive(B, size_b);
-            if (merge_A_B(&C, &size_c, A, size_a, B, size_b, 2000) == MEMORY_ERROR)
-            {
-                printf("Не удалось выделить память\n");
-            }
-            else
-            {
-                printf("Конечный массив C: ");
-                print_massive(C, size_c);
-            }
+            printf("Кончeный массив C: ");
+            print_massive(C, size_c);
+            free(C);
+            C = NULL;
         }
         break;
     case ARGUMENTS:
@@ -231,8 +229,9 @@ int main(int argc, char *argv[])
         break;
     }
 
-    free(A);
-    free(B);
-    free(C);
     return 0;
 }
+
+/*free желательно делать там же, где выделяется память
+Искать ближайший элемент с помощью бин поиска
+Проверять равнство имени входного файла выходному, если они равны сообщить пользователю об этом*/
