@@ -9,8 +9,8 @@ enum err
     FILE_INPUT_NOT_OPEN,
     FILE_OUTPUT_NOT_OPEN,
     TOO_LONG_FILE_NAME,
-    FEW_ARGUMENTS
-
+    FEW_ARGUMENTS,
+    OUTPUT_INPUT_SAME
 };
 
 //-d необходимо исключить символы арабских цифр из входного файла;
@@ -87,15 +87,17 @@ int main(int argc, char *argv[])
     case TOO_LONG_FILE_NAME:
         printf("При генерации имени выходного файла была превышена его длина\n");
         break;
-    }
 
+    case OUTPUT_INPUT_SAME:
+        printf("Относительные имена файлов совпадают\n");
+        break;
+    }
     return 0;
 }
 
 int creat_file_name(const char *pt_fl_in, char *pt_fl_out)
 {
     int len_fl_in = strlen(pt_fl_in);
-    // printf("%s\n", pt_fl_in);
     int len_fl_name = 0;
     char pr[] = "out_";
     int len_pr = strlen(pr);
@@ -107,7 +109,6 @@ int creat_file_name(const char *pt_fl_in, char *pt_fl_out)
     }
     if (len_pr + len_fl_name > 255)
         return TOO_LONG_FILE_NAME;
-    // printf("%d", len_fl_name);
     for (j = 0; j < len_pr; ++j)
     {
         pt_fl_out[j] = pr[j];
@@ -139,7 +140,20 @@ int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out)
         if (argc < 4)
             return FEW_ARGUMENTS; // не введен входной файл
         *(pt_fl_in) = argv[3];
+
         strcpy(pt_fl_out, argv[2]);
+        char *pt_fl_name = pt_fl_out + strlen(argv[2]);
+        while ((pt_fl_name != pt_fl_out) && (*pt_fl_name != '/'))
+        {
+            --pt_fl_name;
+        }
+        ++pt_fl_name;
+        printf("%s", pt_fl_name);
+        if (strcmp(pt_fl_name, *pt_fl_in) == 0)
+        {
+            return OUTPUT_INPUT_SAME;
+        }
+
         //????? не понимаю каким аргументом по счету подается входной файл
         return OK;
     }
@@ -207,6 +221,16 @@ int cnt_latin_letter(const char *f_in, const char *f_out)
     fclose(fout);
     return 0;
 }
+
+/*
+enum ASCII_name
+{
+    Vertical_tab = 11,
+    Horisontal_tab = 9,
+    Line_feed = 10,
+    Carrige_return = 13
+};
+*/
 int cnt_symb(const char *f_in, const char *f_out)
 {
     FILE *fin = fopen(f_in, "r");
@@ -230,7 +254,7 @@ int cnt_symb(const char *f_in, const char *f_out)
             if (!(isalnum(buf[i]) || (buf[i] == ' ')))
             {
                 ++cnt;
-                printf("%d\n", buf[i]);
+                printf("%d\n", (buf[i]));
             }
         }
         fprintf(fout, "%d\n", cnt);
