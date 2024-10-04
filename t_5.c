@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     switch (valid(argc, argv, &x, &eps, &fl))
     {
     case OK:
-        printf("%Lf, %Lf\n", eps, x);
+        printf("%LE, %LE\n", eps, x);
         mistake = sum_a(x, eps, &res);
         printf("a. %.15Lf\n", res);
         mistake = sum_b(x, eps, &res);
@@ -42,13 +42,14 @@ int main(int argc, char *argv[])
         {
             printf("c. %.15Lf\n", res);
         }
+        mistake = sum_d(x, eps, &res);
         if (mistake == SERIES_DIVERGES)
         {
             printf("d. Ряд рассходится\n");
         }
         else
         {
-            printf("c. %.15Lf\n", res);
+            printf("d. %.15Lf\n", res);
         }
         break;
 
@@ -155,37 +156,40 @@ int sum_b(long double x, long double eps, long double *res)
 // ряд сходится при только при |x|<1
 int sum_c(long double x, long double eps, long double *res)
 {
-    long double elem_n = 1;
+    long double pr = 1, cur = pr;
     int n = 0;
     if (fabs(x) >= 1)
     {
         return SERIES_DIVERGES;
     }
-    while (fabs(elem_n) > eps)
+    do
     {
-        elem_n *= ((9.0 * (n + 1.0) * (n + 1.0) * x * x) / ((3.0 * n + 2.0) * (3.0 * n + 1.0)));
+        pr = cur;
+        cur = pr * ((9.0 * (n + 1.0) * (n + 1.0) * x * x) / ((3.0 * n + 2.0) * (3.0 * n + 1.0)));
         ++n;
-        (*res) += elem_n;
-    }
-    (*res) += elem_n;
+        (*res) += cur;
+    } while (fabs(pr - cur) > eps);
+
     return 0;
 }
 
 // не понимаю
 int sum_d(long double x, long double eps, long double *res)
 {
-    long double elem_n = ((-1) * (x * x)) / 2.0;
+    *res = 0;
+    long double pr = ((-1) * (x * x)) * 0.5, cur = pr;
+    *res += pr;
     int n = 1;
     if (fabs(x) >= 1)
     {
         return SERIES_DIVERGES;
     }
-    while (fabs(elem_n) > eps)
+    do
     {
-        elem_n *= ((x * x * (-1) * (2.0 * n + 1.0)) / (2.0 * n + 2.0));
+        pr = cur;
+        cur = pr * ((x * x * (-1) * (2.0 * n + 1.0)) / (2.0 * n + 2.0));
         ++n;
-        (*res) += elem_n;
-    }
-    (*res) += elem_n;
+        (*res) += cur;
+    } while (fabs(pr - cur) > eps);
     return 0;
 }
