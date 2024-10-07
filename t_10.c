@@ -13,6 +13,7 @@ enum err
     NOT_SUIT_BASE_VALUE,
     NOT_CORRECT_NUM,
     UNCORRECT_IN_THIS_BASE,
+    ONLY_BASE,
     STOP
 };
 
@@ -42,14 +43,14 @@ int read_check_base(int *base)
         }
         ++i;
     }
-    if ((buf[0] == '-') || ((*base > 32) || (*base < 2)))
+    if ((buf[0] == '-') || ((*base > 36) || (*base < 2)))
     {
         return NOT_SUIT_BASE_VALUE;
     }
     return 0;
 }
 
-int to_base_10(char *str, int base_from, long int *num)
+int to_base_10(char *str, int base_from, long int *num, int *fl)
 {
     char *pt_str = str;
     enum err mistake = 0;
@@ -69,6 +70,7 @@ int to_base_10(char *str, int base_from, long int *num)
     }
     while (*pt_str != '\0')
     {
+        *fl = 1;
         if ((((*pt_str >= 'A') && (*pt_str <= 'Z')) || (!isalnum(*pt_str))) && (!isspace(*pt_str)))
         {
             return NOT_CORRECT_NUM;
@@ -77,17 +79,24 @@ int to_base_10(char *str, int base_from, long int *num)
         {
             return UNCORRECT_IN_THIS_BASE;
         }
+        if (*num < 0)
+        {
+            return NUM_TOO_BIG;
+        }
         *num = *num * base_from + *pt_str - ((isalpha(*pt_str)) ? ('a' - 10) : ('0'));
         ++pt_str;
     }
-
     return mistake;
 }
 
-int find_max(char *str, int base_from, long int *max_num)
+int find_max(char *str, int base_from, long int *max_num, int *fl)
 {
     long int num = 0;
-    enum err mistake = to_base_10(str, base_from, &num);
+    enum err mistake = to_base_10(str, base_from, &num, fl);
+    if (*fl == 0)
+    {
+        return ONLY_BASE;
+    }
     if (num > *max_num)
     {
         *max_num = num;
@@ -98,11 +107,11 @@ int find_max(char *str, int base_from, long int *max_num)
 void to_base(long int num, int base_to, char *str, char **str_begin)
 {
     int y;
-    *str_begin = str + strlen(str);
+    *str_begin = str + sizeof(long int) * 8;
     while (num > 0)
     {
         y = num % base_to;
-        (*(--(*str_begin))) = ((y > 9) ? ('a' + y % 10) : ('0' + y));
+        (*(--(*str_begin))) = ((y > 9) ? ('a' + y - 10) : ('0' + y));
         num /= base_to;
     }
     return;
@@ -112,17 +121,18 @@ int main()
 {
 
     int base = 0;
-    long int max_num = 0;
+    long int max_num = -1;
     enum err mistake = read_check_base(&base);
     int max_len_num = sizeof(long int) << 3; // максимальная длина 2-го числа влезающего в long int
     char buf[BUFSIZE];
     char str[max_len_num + 1];
-    // STOP записывает а из цикла не выходит
+    int fl = 0;
+
     while ((mistake == 0) && (mistake != STOP))
     {
         if (scanf("%66s", buf) == 1)
         {
-            mistake = find_max(buf, base, &max_num);
+            mistake = find_max(buf, base, &max_num, &fl);
         }
         else
         {
@@ -137,17 +147,20 @@ int main()
         *(str + max_len_num) = 0;
 
         printf("В 10-ой %ld\n", max_num);
-        to_base(max_num, 8, str + max_len_num, &str_begin);
+        to_base(max_num, 8, str, &str_begin);
         printf("В 8-ой %s\n", str_begin);
 
-        to_base(max_num, 18, str + max_len_num, &str_begin);
+        to_base(max_num, 18, str, &str_begin);
         printf("В 18-ой %s\n", str_begin);
 
-        to_base(max_num, 27, str + max_len_num, &str_begin);
+        to_base(max_num, 27, str, &str_begin);
         printf("В 27-ой %s\n", str_begin);
 
-        to_base(max_num, 36, str + max_len_num, &str_begin);
+        to_base(max_num, 36, str, &str_begin);
         printf("В 36-ой %s\n", str_begin);
+        break;
+    case ONLY_BASE:
+        printf("Введена только база\n");
         break;
     case NUM_TOO_BIG:
         printf("Переполенение типа long int\n");
@@ -156,7 +169,7 @@ int main()
         printf("Аргумент не является целым числом\n");
         break;
     case NOT_SUIT_BASE_VALUE:
-        printf("Значение базы должно находится в отрезке [2;26]\n");
+        printf("Значение базы должно находится в отрезке [2;36]\n");
         break;
     case NOT_CORRECT_NUM:
         printf("Число записано не верное, либо не является числом\n");
