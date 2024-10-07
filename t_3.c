@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     switch (valid(argc, argv, &eps, &a, &b, &c, &num1, &num2))
     {
     case OK:
-        printf("%lf %lf %lf %lf %ld %ld\n", eps, a, b, c, num1, num2);
+        // printf("%lf %lf %lf %lf %ld %ld\n", eps, a, b, c, num1, num2);
         switch (argv[1][1])
         {
         case 'q':
@@ -150,10 +150,14 @@ void print_res(int mistake, double res1, double res2, double a, double b, double
 
 int solve_quadratic_equation(double eps, double a, double b, double c, double *res1, double *res2)
 {
-    double d = b * b - 4 * a * c;
-    if (d < eps)
+    if ((fabs(a) > eps) && (fabs(b) < eps) && (fabs(c) < eps))
     {
-        return NOT_SOLVE;
+        *res1 = 0;
+        return ONE_SOLVE;
+    }
+    if ((fabs(a) < eps) && (fabs(b) < eps) && (fabs(c) < eps))
+    {
+        return ANY;
     }
     if (fabs(a) < eps)
     {
@@ -167,6 +171,11 @@ int solve_quadratic_equation(double eps, double a, double b, double c, double *r
         }
         (fabs(c) < eps) ? (*res1 = 0.0) : (*res1 = (c * (-1)) / b);
         return NOT_quadratic_equation;
+    }
+    double d = b * b - 4 * a * c;
+    if ((d < eps) || (d == 0))
+    {
+        return NOT_SOLVE;
     }
     *res1 = ((-1) * b + pow(d, 0.5)) / (2 * a);
     *res2 = ((-1) * b - pow(d, 0.5)) / (2 * a);
