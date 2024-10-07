@@ -122,14 +122,8 @@ int creat_file_name(char *pt_fl_in, char **pt_fl_out)
     char *fl_name_start = NULL;
     if (strlen("out_") + strlen(pt_fl_in) > 255)
         return TOO_LONG_FILE_NAME;
+
     find_file_name(pt_fl_in, &fl_name_start);
-    /*while ((pt_fl_in != fl_name_start) && (*--fl_name_start != '/'))
-    {
-    }
-    if ('/' == *fl_name_start)
-    {
-        ++fl_name_start;
-    }*/
     char *p = *pt_fl_out;
     strncpy(p, pt_fl_in, fl_name_start - pt_fl_in);
     p += fl_name_start - pt_fl_in;
@@ -161,26 +155,10 @@ int valid(int argc, char *argv[], char **pt_fl_in, char **pt_fl_out)
         *(pt_fl_in) = argv[3];
         *pt_fl_out = argv[2];
 
-        /*
-        char *pt_fl_name_out = *pt_fl_out + strlen(argv[2]);
-        char *pt_fl_name_in = *pt_fl_in + strlen(argv[3]);
-        if ((*(pt_fl_name_in - 1) == '/') || (*(pt_fl_name_out - 1) == '/'))
-        {
-            return ONLY_DIR;
-        }
-        while ((pt_fl_name_out != *pt_fl_out) && (*--pt_fl_name_out != '/'))
-        {
-        }
-        while ((pt_fl_name_in != *pt_fl_in) && (*--pt_fl_name_out != '/'))
-        {
-        }
-        ++pt_fl_name_out;
-        ++pt_fl_name_in;
-        */
         char *pt_fl_name_out = NULL, *pt_fl_name_in = NULL;
         find_file_name(argv[2], &pt_fl_name_out);
         find_file_name(argv[3], &pt_fl_name_in);
-        printf("\n%s-file name out \n %s - file name\n", pt_fl_name_out, pt_fl_name_in);
+        // printf("\n%s-file name out \n %s - file name\n", pt_fl_name_out, pt_fl_name_in);
         if (strcmp(pt_fl_name_in, pt_fl_name_out) == 0)
         {
             return OUTPUT_INPUT_SAME;
