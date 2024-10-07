@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 enum err
 {
@@ -10,7 +11,9 @@ enum err
     FILE_OUTPUT_NOT_OPEN,
     TOO_LONG_FILE_NAME,
     FEW_ARGUMENTS,
-    OUTPUT_INPUT_SAME
+    OUTPUT_INPUT_SAME,
+    FILE_OUTPUT_NOT_CREAT,
+    ONLY_DIR
 };
 
 //-d необходимо исключить символы арабских цифр из входного файла;
@@ -31,17 +34,15 @@ int replace_not_num_to_base16(const char *, const char *);
 третьим аргументом командной строки; иначе имя выходного файла генерируется
 приписыванием к имени входного файла префикса “out_”.
 */
-int creat_file_name(char *, char *);
+int creat_file_name(char *, char **);
 
 int valid(int argc, char *argv[], char **pt_fl_in, char **pt_fl_out);
 
 int main(int argc, char *argv[])
 {
-    char *pt_fl_in = NULL;
-    char pt_fl_out[256];
-    char *pt = pt_fl_out;
+    char *pt_fl_in = NULL, *pt_fl_out = NULL;
     enum err file_error;
-    switch (valid(argc, argv, &pt_fl_in, &pt))
+    switch (valid(argc, argv, &pt_fl_in, &pt_fl_out))
     {
     case OK:
         printf("%s-входной файл\n%s-выходной файл\n", pt_fl_in, pt_fl_out);
@@ -62,6 +63,7 @@ int main(int argc, char *argv[])
         case 'a':
             file_error = replace_not_num_to_base16(pt_fl_in, pt_fl_out);
             break;
+            free(pt_fl_out);
         }
         if (file_error == FILE_INPUT_NOT_OPEN)
         {
@@ -92,29 +94,48 @@ int main(int argc, char *argv[])
     case OUTPUT_INPUT_SAME:
         printf("Относительные имена файлов совпадают\n");
         break;
+    case FILE_OUTPUT_NOT_CREAT:
+        printf("Не удалось выделить память для входного файла\n");
+        break;
+    case ONLY_DIR:
+        printf("Один из аргументов явлется директорией, ожидалось имя файла\n");
+        break;
     }
     return 0;
 }
 
-int creat_file_name(char *pt_fl_in, char *pt_fl_out)
+void find_file_name(char *begin_file_path, char **pt_begin_fl_name)
 {
-    char *fl_name_start = pt_fl_in + strlen(pt_fl_in);
+    *pt_begin_fl_name = begin_file_path + strlen(begin_file_path);
+    while ((begin_file_path != *pt_begin_fl_name) && (*(--(*pt_begin_fl_name)) != '/'))
+    {
+    }
+    if (**pt_begin_fl_name == '/')
+    {
+        ++(*pt_begin_fl_name);
+    }
+    return;
+}
+
+int creat_file_name(char *pt_fl_in, char **pt_fl_out)
+{
+    char *fl_name_start = NULL;
     if (strlen("out_") + strlen(pt_fl_in) > 255)
         return TOO_LONG_FILE_NAME;
-    while ((pt_fl_in != fl_name_start) && (*--fl_name_start != '/'))
+    find_file_name(pt_fl_in, &fl_name_start);
+    /*while ((pt_fl_in != fl_name_start) && (*--fl_name_start != '/'))
     {
     }
     if ('/' == *fl_name_start)
     {
         ++fl_name_start;
-    }
-    char *p = pt_fl_out;
-    strncpy(pt_fl_out, pt_fl_in, fl_name_start - pt_fl_in);
+    }*/
+    char *p = *pt_fl_out;
+    strncpy(p, pt_fl_in, fl_name_start - pt_fl_in);
     p += fl_name_start - pt_fl_in;
     strcpy(p, "out_");
     p += strlen("out_");
     strcpy(p, fl_name_start);
-    printf("%s", pt_fl_out);
     return 0;
 }
 
@@ -136,20 +157,29 @@ int valid(int argc, char *argv[], char **pt_fl_in, char **pt_fl_out)
     if ((argv[1][1] == 'n') && strstr(" d i s a ", argv[1] + 2))
     {
         if (argc < 4)
-            return FEW_ARGUMENTS; // не введен входной файл
+            return FEW_ARGUMENTS;
         *(pt_fl_in) = argv[3];
-
         *pt_fl_out = argv[2];
+
+        /*
         char *pt_fl_name_out = *pt_fl_out + strlen(argv[2]);
-        char *pt_fl_name_in = *pt_fl_in + strlen(argv[2]);
+        char *pt_fl_name_in = *pt_fl_in + strlen(argv[3]);
+        if ((*(pt_fl_name_in - 1) == '/') || (*(pt_fl_name_out - 1) == '/'))
+        {
+            return ONLY_DIR;
+        }
         while ((pt_fl_name_out != *pt_fl_out) && (*--pt_fl_name_out != '/'))
         {
         }
-        while ((pt_fl_name_in != *pt_fl_in) && (*--pt_fl_name_in != '/'))
+        while ((pt_fl_name_in != *pt_fl_in) && (*--pt_fl_name_out != '/'))
         {
         }
         ++pt_fl_name_out;
         ++pt_fl_name_in;
+        */
+        char *pt_fl_name_out = NULL, *pt_fl_name_in = NULL;
+        find_file_name(argv[2], &pt_fl_name_out);
+        find_file_name(argv[3], &pt_fl_name_in);
         printf("\n%s-file name out \n %s - file name\n", pt_fl_name_out, pt_fl_name_in);
         if (strcmp(pt_fl_name_in, pt_fl_name_out) == 0)
         {
@@ -160,7 +190,15 @@ int valid(int argc, char *argv[], char **pt_fl_in, char **pt_fl_out)
         return OK;
     }
     *(pt_fl_in) = argv[2];
-    return creat_file_name(*pt_fl_in, *pt_fl_out);
+    if (*(argv[2] + strlen(argv[2]) - 1) == '/')
+    {
+        return ONLY_DIR;
+    }
+    if (!(*pt_fl_out = (char *)malloc(sizeof(char) * 256)))
+    {
+        return FILE_OUTPUT_NOT_CREAT;
+    }
+    return creat_file_name(*pt_fl_in, pt_fl_out);
 }
 
 int put_away_num(const char *f_in, const char *f_out)
