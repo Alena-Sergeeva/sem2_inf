@@ -31,19 +31,20 @@ int replace_not_num_to_base16(const char *, const char *);
 третьим аргументом командной строки; иначе имя выходного файла генерируется
 приписыванием к имени входного файла префикса “out_”.
 */
-int creat_file_name(const char *, char *);
+int creat_file_name(char *, char *);
 
-int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out);
+int valid(int argc, char *argv[], char **pt_fl_in, char **pt_fl_out);
 
 int main(int argc, char *argv[])
 {
     char *pt_fl_in = NULL;
     char pt_fl_out[256];
+    char *pt = pt_fl_out;
     enum err file_error;
-    switch (valid(argc, argv, &pt_fl_in, pt_fl_out))
+    switch (valid(argc, argv, &pt_fl_in, &pt))
     {
     case OK:
-        // printf("%s-входной файл\n%s-выходной файл\n", pt_fl_in, pt_fl_out);
+        printf("%s-входной файл\n%s-выходной файл\n", pt_fl_in, pt_fl_out);
         switch (argv[1][strlen(argv[1]) - 1])
         {
         case 'd':
@@ -95,32 +96,29 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int creat_file_name(const char *pt_fl_in, char *pt_fl_out)
+int creat_file_name(char *pt_fl_in, char *pt_fl_out)
 {
-    int len_fl_in = strlen(pt_fl_in);
-    int len_fl_name = 0;
-    char pr[] = "out_";
-    int len_pr = strlen(pr);
-
-    int j = 0;
-    while ((len_fl_in - len_fl_name - 1 >= 0) && (pt_fl_in[len_fl_in - 1 - len_fl_name] != '/'))
-    {
-        ++len_fl_name;
-    }
-    if (len_pr + len_fl_name > 255)
+    char *fl_name_start = pt_fl_in + strlen(pt_fl_in);
+    if (strlen("out_") + strlen(pt_fl_in) > 255)
         return TOO_LONG_FILE_NAME;
-    for (j = 0; j < len_pr; ++j)
+    while ((pt_fl_in != fl_name_start) && (*--fl_name_start != '/'))
     {
-        pt_fl_out[j] = pr[j];
     }
-    for (j = 0; j < len_fl_name + len_pr + 1; ++j)
+    if ('/' == *fl_name_start)
     {
-        pt_fl_out[len_pr + j] = pt_fl_in[len_fl_in - len_fl_name + j];
+        ++fl_name_start;
     }
+    char *p = pt_fl_out;
+    strncpy(pt_fl_out, pt_fl_in, fl_name_start - pt_fl_in);
+    p += fl_name_start - pt_fl_in;
+    strcpy(p, "out_");
+    p += strlen("out_");
+    strcpy(p, fl_name_start);
+    printf("%s", pt_fl_out);
     return 0;
 }
 
-int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out)
+int valid(int argc, char *argv[], char **pt_fl_in, char **pt_fl_out)
 {
     if (argc < 3)
     {
@@ -141,15 +139,19 @@ int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out)
             return FEW_ARGUMENTS; // не введен входной файл
         *(pt_fl_in) = argv[3];
 
-        strcpy(pt_fl_out, argv[2]);
-        char *pt_fl_name = pt_fl_out + strlen(argv[2]);
-        while ((pt_fl_name != pt_fl_out) && (*pt_fl_name != '/'))
+        *pt_fl_out = argv[2];
+        char *pt_fl_name_out = *pt_fl_out + strlen(argv[2]);
+        char *pt_fl_name_in = *pt_fl_in + strlen(argv[2]);
+        while ((pt_fl_name_out != *pt_fl_out) && (*--pt_fl_name_out != '/'))
         {
-            --pt_fl_name;
         }
-        ++pt_fl_name;
-        printf("%s", pt_fl_name);
-        if (strcmp(pt_fl_name, *pt_fl_in) == 0)
+        while ((pt_fl_name_in != *pt_fl_in) && (*--pt_fl_name_in != '/'))
+        {
+        }
+        ++pt_fl_name_out;
+        ++pt_fl_name_in;
+        printf("\n%s-file name out \n %s - file name\n", pt_fl_name_out, pt_fl_name_in);
+        if (strcmp(pt_fl_name_in, pt_fl_name_out) == 0)
         {
             return OUTPUT_INPUT_SAME;
         }
@@ -158,7 +160,7 @@ int valid(int argc, char *argv[], char **pt_fl_in, char *pt_fl_out)
         return OK;
     }
     *(pt_fl_in) = argv[2];
-    return creat_file_name(*pt_fl_in, pt_fl_out);
+    return creat_file_name(*pt_fl_in, *pt_fl_out);
 }
 
 int put_away_num(const char *f_in, const char *f_out)
@@ -228,9 +230,11 @@ enum ASCII_name
     Vertical_tab = 11,
     Horisontal_tab = 9,
     Line_feed = 10,
-    Carrige_return = 13
+    Carrige_return = 13,
+    Space = 32
 };
 */
+// s
 int cnt_symb(const char *f_in, const char *f_out)
 {
     FILE *fin = fopen(f_in, "r");
@@ -248,14 +252,14 @@ int cnt_symb(const char *f_in, const char *f_out)
     while (fgets(buf, 256, fin) != NULL)
     {
         int cnt = 0;
-        printf("%s\n", buf);
+        // printf("текущая строка: %s\n", buf);
         for (int i = 0; i < strlen(buf); ++i)
         { // Считаются также символы переноса строки, табуляции, переноса каретки и другие
             if (!(isalnum(buf[i]) || (buf[i] == ' ')))
             {
                 ++cnt;
-                printf("%d\n", (buf[i]));
             }
+            // printf("%d\n", (buf[i]));
         }
         fprintf(fout, "%d\n", cnt);
     }
@@ -264,7 +268,7 @@ int cnt_symb(const char *f_in, const char *f_out)
     fclose(fout);
     return 0;
 }
-
+// a
 int replace_not_num_to_base16(const char *f_in, const char *f_out)
 {
     FILE *fin = fopen(f_in, "r");
