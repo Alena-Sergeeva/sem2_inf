@@ -154,10 +154,12 @@ int sum_b(long double x, long double eps, long double *res)
 }
 
 // ряд сходится при только при |x|<1
+// 2.9004
 int sum_c(long double x, long double eps, long double *res)
 {
     long double pr = 1, cur = pr;
     int n = 0;
+    *res = 1;
     if (fabs(x) >= 1)
     {
         return SERIES_DIVERGES;
@@ -165,7 +167,7 @@ int sum_c(long double x, long double eps, long double *res)
     do
     {
         pr = cur;
-        cur = pr * ((9.0 * (n + 1.0) * (n + 1.0) * x * x) / ((3.0 * n + 2.0) * (3.0 * n + 1.0)));
+        cur = (pr * (27.0 * (n + 1.0) * (n + 1.0) * (n + 1.0) * x * x)) / ((3.0 * n + 3.0) * (3.0 * n + 2.0) * (3.0 * n + 1.0));
         ++n;
         (*res) += cur;
     } while (fabs(pr - cur) > eps);
