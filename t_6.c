@@ -15,9 +15,7 @@ enum err
 };
 
 int valid(int, char *[], double *);
-
 int a_integ(double eps, double *res);
-// int S_a_integ(long double eps, long double *res);
 int b_integ(double eps, double *res);
 int c_integ(double eps, double *res);
 int d_integ(double eps, double *res);
@@ -55,7 +53,7 @@ int main(int argc, char *argv[])
         break;
 
     case NUM_TOO_BIG:
-        printf("Произошло переполнение типа long double\n");
+        printf("Произошло переполнение типа double\n");
         break;
 
     case WRONGE_EPS_VALUE:
@@ -87,7 +85,6 @@ int valid(int argc, char *argv[], double *eps)
     }
     char *pt_stop_symbol = NULL;
     *eps = strtod(argv[1], &pt_stop_symbol);
-    // printf("%lf", *eps);
     if ((fabs(*eps) == HUGE_VAL) || (*eps == (-HUGE_VAL)))
     {
         return NUM_TOO_BIG;
@@ -151,14 +148,13 @@ int a_integ(double eps, double *res)
         for (i = 2.0 / n; i < 1.0; i += (1.0 / n))
         {
             y_i_2 = (logl(1.0 + i)) / i;
-            res_temp += ((y_i_1 + y_i_2) / (2 * n)); // трапеция
+            res_temp += ((y_i_1 + y_i_2) / (2.0 * n)); // трапеция
             y_i_1 = y_i_2;
         }
         y_i_2 = (logl(1.0 + 1.0)) / 1.0;
-        res_temp += (((y_i_1 + y_i_2) / 2) * (1 - i));
-        n *= 2;
+        res_temp += (((y_i_1 + y_i_2) / 2.0) * (1.0 - i));
+        n = n << 1;
     } while (fabs(res_temp - res_prev) > eps);
-    // printf("n = %d: %Lf", n, res_temp);
     *res = res_temp;
     return 0;
 }
@@ -176,20 +172,17 @@ int b_integ(double eps, double *res)
         for (i = 1.0 / n; i < 1.0; i += (1.0 / n))
         {
             y_i_2 = exp((i * i) / (-2));
-            res_temp += ((y_i_1 + y_i_2) / (2 * n)); // трапеция
+            res_temp += ((y_i_1 + y_i_2) / (2.0 * n));
             y_i_1 = y_i_2;
         }
-        y_i_2 = exp((1.0 + 1.0) / (-2));
-        res_temp += (((y_i_1 + y_i_2) / 2) * (1 - i));
-        // printf("n = %d: %Lf, %Lf\n", n, fabs(res_temp - res_prev), eps);
-        n *= 2;
+        y_i_2 = exp((1.0 + 1.0) / (-2.0));
+        res_temp += (((y_i_1 + y_i_2) / 2.0) * (1.0 - i));
+        n = n << 1;
     } while (fabs(res_temp - res_prev) > eps);
-    // printf("n = %d: %Lf", n, res_temp);
     *res = res_temp;
     return 0;
 }
 
-// 1
 int c_integ(double eps, double *res)
 {
     double res_temp = 0.0, res_prev = 0.0;
@@ -205,10 +198,8 @@ int c_integ(double eps, double *res)
             res_temp += ((y_i_1 + y_i_2) / (2 * n)); // трапеция
             y_i_1 = y_i_2;
         }
-        // printf("n = %d: %Lf, %Lf\n", n, fabs(res_temp - res_prev), eps);
-        n *= 2;
+        n = n << 1;
     } while (fabs(res_temp - res_prev) > eps);
-    // printf("n = %d: %Lf", n, res_temp);
     *res = res_temp;
     return 0;
 }
@@ -218,7 +209,7 @@ int d_integ(double eps, double *res)
 {
     double res_temp = 0.0, res_prev = 0.0;
     int n = 2;
-    double y_i_1 = 1, y_i_2, i; // 0^0
+    double y_i_1 = 1, y_i_2, i;
     do
     {
         res_prev = res_temp;
@@ -226,14 +217,13 @@ int d_integ(double eps, double *res)
         for (i = 1.0 / n; i < 1.0; i += (1.0 / n))
         {
             y_i_2 = pow(i, i);
-            res_temp += ((y_i_1 + y_i_2) / (2 * n)); // трапеция
+            res_temp += ((y_i_1 + y_i_2) / (2.0 * n)); // трапеция
             y_i_1 = y_i_2;
         }
         y_i_2 = 1.0;
-        res_temp += (((y_i_1 + y_i_2) / 2) * (1 - i));
-        n *= 2;
+        res_temp += (((y_i_1 + y_i_2) / 2.0) * (1.0 - i));
+        n = n << 1;
     } while (fabs(res_temp - res_prev) > eps);
-    //   printf("\nn = %d: %Lf", n, res_temp);
     *res = res_temp;
     return 0;
 }
