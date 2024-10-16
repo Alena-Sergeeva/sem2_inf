@@ -39,9 +39,21 @@ int main(int argc, char *argv[])
     printf("%zd\nstr_new: %s\n", length, str_new);
     free(str_new);
     str_new = NULL;
+
     up_first_letter(&str_new, str);
     printf("str_new1: %s\n", str_new);
     free(str_new);
+    // Функция srand выполняет инициализацию генератора случайных чисел rand.
+    // Генератор псевдо-случайных чисел инициализируется с помощью аргумента seed, который играет роль зерна.
+    srand(11);
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
+    printf("%d\n", 1 + rand() % (5 - 1 + 1));
     /*
     char fl = ' ';
     enum err f_mistake = 0;
@@ -158,17 +170,17 @@ int up_first_letter(char **str_new, char const *str)
 int group_str(char *str, char **new_str)
 {
     char *str_end = str;
-    int length = 0;
+    size_t length = 0;
     enum err mistake = 0;
     if ((mistake = strlength(str, &length)) != 0)
     {
         return mistake;
     }
-    if (*new_str = (char *)malloc(sizeof(char) * (strlength(str, &length) + 1)))
+    if (*new_str = (char *)malloc(sizeof(char) * (length) + 1))
     {
         return MEMORY_ERROR;
     }
-    while (*str_end++ != '/0')
+    while (*str_end++ != '\0')
     {
         if (('0' <= *str_end) && ('9' >= *str_end))
         {
@@ -177,19 +189,19 @@ int group_str(char *str, char **new_str)
         }
     }
     str_end = str;
-    while (*str_end++ != '/0')
+    while (*str_end++)
     {
         if ((('a' <= *str_end) && ('z' >= *str_end)) || (('A' <= *str_end) && ('Z' >= *str_end)))
         {
-            **new_str = str_end;
+            **new_str = *str_end;
             ++new_str;
         }
     }
-    while (*str++ != '/0')
+    while (*str++ != '\0')
     {
         if (!((('a' <= *str_end) && ('z' >= *str_end)) || (('A' <= *str_end) && ('Z' >= *str_end))) && !(('0' <= *str_end) && ('9' >= *str_end)))
         {
-            **new_str = str_end;
+            **new_str = *str_end;
             ++new_str;
         }
     }
@@ -203,31 +215,32 @@ int group_str(char *str, char **new_str)
 третьим аргументом.*/
 int str_cat(char *str1, char *str2, char **str_new)
 {
-    int length1 = 0, length2 = 0;
+    size_t length1 = 0, length2 = 0;
     enum err mistake = 0;
     if ((mistake = strlength(str1, &length1)) || (mistake = strlength(str2, &length2)))
     {
         return mistake;
     }
     if (*str_new = (char *)malloc(sizeof(char) * (length1 + length2 + 1)))
-        ;
     {
         return MEMORY_ERROR;
     }
-    while (str1 != '\0')
+    while (*str1 != '\0')
     {
         **str_new = *str1++;
         ++str_new;
     }
-    while (str2 != '\0')
+    while (*str2 != '\0')
     {
         **str_new = *str2++;
         ++str_new;
     }
     return 0;
 }
+/*
 int cat_rundom_str(char *str, char **str_new, int seed, int cnt)
 {
-
+    int i = srand(seed);
+    printf("%d\n", i);
     for (i = 0; i < cnt)
-}
+}*/
