@@ -1,103 +1,4 @@
-/*Через аргументы командной строки программе подаются флаг (1 аргументом),
-строка (2 аргументом); и (только для флага -c) целое число типа unsigned int и
-далее произвольное количество строк. Флаг определяет действие, которое необходимо
-выполнить над переданными строками:
-● -c получить новую строку, являющуюся конкатенацией второй, четвёртой, пятой и т.
-д. переданных в командную строку строк; строки конкатенируются в
-псевдослучайном порядке; для засеивания генератора псевдослучайных чисел
-функцией srand используйте seed равный числу, переданному в командную строку
-третьим аргументом.
-Созданные функциями строки должны располагаться в выделенной из динамической кучи памяти.
-Продемонстрируйте работу реализованных функций.*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-
-enum err
-{
-    OK,
-    NOT_NUM,
-    WRONG_FLAG,
-    NUM_TOO_BIG,
-    WRONG_POINTER,
-    MEMORY_ERROR,
-    ARGUMETS
-};
-
-int valid(int argc, char *argv[], char *fl, unsigned int *seed);
-
-int strlength(char *str, size_t *length);
-int reverse(char **str_new, char const *str);
-int up_first_letter(char **str_new, char const *str);
-
-int main(int argc, char *argv[])
-{
-    char *str = "asjdjfe";
-    size_t length = 0;
-    char *str_new = NULL;
-    reverse(&str_new, str);
-    printf("%zd\nstr_new: %s\n", length, str_new);
-    free(str_new);
-    str_new = NULL;
-
-    up_first_letter(&str_new, str);
-    printf("str_new1: %s\n", str_new);
-    free(str_new);
-    // Функция srand выполняет инициализацию генератора случайных чисел rand.
-    // Генератор псевдо-случайных чисел инициализируется с помощью аргумента seed, который играет роль зерна.
-    srand(11);
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    printf("%d\n", 1 + rand() % (5 - 1 + 1));
-    /*
-    char fl = ' ';
-    enum err f_mistake = 0;
-    unsigned int seed = 0;
-    switch (valid(argc, argv, &fl, &seed))
-    {
-    case OK:
-        switch (fl)
-        {
-        case 'l':
-            mistake = strlength(str, &length);
-            break;
-        case 'r':
-            mistake = reverse(&str_new, str);
-            printf("%zd\nstr_new: %s\n", length, str_new);
-            free(str_new);
-            break;
-        case 'u':
-
-            break;
-        case 'n':
-
-            break;
-        case 'c':
-
-            break;
-        }
-        break;
-    case WRONG_FLAG:
-        printf("Флаг введен не верно\n");
-        break;
-    case NOT_NUM:
-        printf("Строка не вляется десятичным целым числом\n");
-        break;
-    case NUM_TOO_BIG:
-        printf("переполнение типа long int\n");
-        break;
-    case ARGUMETS:
-        printf("Введено неверное колличество аргументов\n");
-        break;
-    }
-*/
-    return 0;
-}
+#include "str_oper_valid.h"
 
 //-l подсчёт длины переданной строки, переданной вторым аргументом;
 int strlength(char *str, size_t *length)
@@ -110,6 +11,71 @@ int strlength(char *str, size_t *length)
     while (*str++ != '\0')
     {
         ++(*length);
+    }
+    return 0;
+}
+
+int check_unsigned_int(char *str, unsigned int *x)
+{
+    unsigned int res = 0;
+    int sign = 0;
+    printf("%s", str);
+    if (*str == '-')
+    {
+        sign = -1;
+        ++str;
+    }
+    while (*str != '\0')
+    {
+        if ((*str >= '0') && (*str <= '9'))
+        {
+            if (res > res * 10 + (*str - '0'))
+            {
+                return UINT_OVERFLOW;
+            }
+            res = res * 10 + (*str - '0');
+        }
+        else
+        {
+            return NOT_NUM;
+        }
+        ++str;
+    }
+    if (sign == (-1))
+    {
+        return NEGATIVE;
+    }
+    *x = res;
+    return 0;
+}
+int valid(int argc, char *argv[], char *fl, unsigned int *seed)
+{
+    enum err mistake = 0;
+    if (argc < 3)
+    {
+        return ARGUMETS;
+    }
+    *fl = argv[1][1];
+    int is_fl = (('u' == *fl) || ('l' == *fl) || ('r' == *fl) || ('u' == *fl) || ('n' == *fl) || ('c' == *fl));
+    if (!((argv[1][0] == '-') && (is_fl) && (argv[1][2] == '\0')))
+    {
+        return WRONG_FLAG;
+    }
+    if (*fl == 'c')
+    {
+        if (argc < 4)
+        {
+            return ARGUMETS;
+        }
+        if (mistake = check_unsigned_int(argv[2], seed))
+        {
+            return mistake;
+        }
+        return 0;
+    }
+    if (argc > 3)
+    {
+        return ARGUMETS;
     }
     return 0;
 }
@@ -136,9 +102,10 @@ int reverse(char **str_new, char const *str)
 /*-u получить новую строку, идентичную переданной вторым аргументом, при этом
 каждый символ, стоящий на нечётной позиции (первый символ строки находится на
 позиции 0), должен быть преобразован в верхний регистр;*/
-int up_first_letter(char **str_new, char const *str)
+int up_letter(char **str_new, char const *str)
 {
     size_t length = 0;
+    int i = 0;
     if (!str)
     {
         return WRONG_POINTER;
@@ -151,15 +118,12 @@ int up_first_letter(char **str_new, char const *str)
     {
         return MEMORY_ERROR;
     }
-    *(*str_new + length) = '\0';
-    while (--length > 0)
+    for (i = 0; i < length; ++i)
     {
-        *(*str_new + length) = *(str + length);
+        // printf("%d", (1 & i));
+        (*str_new)[i] = str[i] + ((((1 & i)) && (str[i] >= 'a') && (str[i] <= 'z')) ? 'A' - 'a' : 0);
     }
-    if ((*str >= 'a') && (*str <= 'z'))
-    {
-        *(*str_new) = *str + 'A' - 'a';
-    }
+    (*str_new)[i] = '\0';
     return 0;
 }
 
@@ -167,42 +131,40 @@ int up_first_letter(char **str_new, char const *str)
 чтобы в начале строки находились символы цифр в исходном порядке, затем
 символы букв в исходном порядке, а в самом конце – все остальные символы, также
 в исходном порядке;*/
-int group_str(char *str, char **new_str)
+int group_str(char **new_str, char *str)
 {
-    char *str_end = str;
     size_t length = 0;
+    int i = 0;
     enum err mistake = 0;
+    int end_str_new = 0;
     if ((mistake = strlength(str, &length)) != 0)
     {
         return mistake;
     }
-    if (*new_str = (char *)malloc(sizeof(char) * (length) + 1))
+    if (!(*new_str = (char *)malloc(sizeof(char) * ((length) + 1))))
     {
         return MEMORY_ERROR;
     }
-    while (*str_end++ != '\0')
+
+    for (i = 0; i < length; ++i)
     {
-        if (('0' <= *str_end) && ('9' >= *str_end))
+        if (('0' <= str[i]) && ('9' >= str[i]))
         {
-            **new_str = *str_end;
-            ++new_str;
+            (*new_str)[end_str_new++] = str[i];
         }
     }
-    str_end = str;
-    while (*str_end++)
+    for (i = 0; i < length; ++i)
     {
-        if ((('a' <= *str_end) && ('z' >= *str_end)) || (('A' <= *str_end) && ('Z' >= *str_end)))
+        if ((('a' <= str[i]) && ('z' >= str[i])) || (('A' <= str[i]) && ('Z' >= str[i])))
         {
-            **new_str = *str_end;
-            ++new_str;
+            (*new_str)[end_str_new++] = str[i];
         }
     }
-    while (*str++ != '\0')
+    for (i = 0; i <= length; ++i)
     {
-        if (!((('a' <= *str_end) && ('z' >= *str_end)) || (('A' <= *str_end) && ('Z' >= *str_end))) && !(('0' <= *str_end) && ('9' >= *str_end)))
+        if (!((('a' <= str[i]) && ('z' >= str[i])) || (('A' <= str[i]) && ('Z' >= str[i]))) && !(('0' <= str[i]) && ('9' >= str[i])))
         {
-            **new_str = *str_end;
-            ++new_str;
+            (*new_str)[end_str_new++] = str[i];
         }
     }
     return 0;
@@ -213,34 +175,48 @@ int group_str(char *str, char **new_str)
 псевдослучайном порядке; для засеивания генератора псевдослучайных чисел
 функцией srand используйте seed равный числу, переданному в командную строку
 третьим аргументом.*/
-int str_cat(char *str1, char *str2, char **str_new)
+int str_cat(char *str_new, char *str1, size_t *length_str_new)
 {
-    size_t length1 = 0, length2 = 0;
+    size_t length1 = 0;
+    int i = 0;
     enum err mistake = 0;
-    if ((mistake = strlength(str1, &length1)) || (mistake = strlength(str2, &length2)))
+    if (mistake = strlength(str1, &length1))
     {
         return mistake;
     }
-    if (*str_new = (char *)malloc(sizeof(char) * (length1 + length2 + 1)))
+    for (i = 0; i <= length1; ++i)
+    {
+        str_new[*length_str_new + i] = str1[i];
+    }
+    (*length_str_new) += length1;
+    return 0;
+}
+
+int cat_random_str(char *str_array[], char **str_new, int seed, int cnt)
+{
+    size_t length = 0;
+    int i, capacity = 0;
+    enum err mistake = 0;
+    srand(seed);
+    *str_new = "\0";
+    for (i = 0; i < cnt; ++i)
+    {
+        if (mistake = strlength(str_array[i], &length))
+        {
+            return mistake;
+        }
+        capacity += length;
+    }
+    if (!(*str_new = (char *)malloc(sizeof(char) * capacity)))
     {
         return MEMORY_ERROR;
     }
-    while (*str1 != '\0')
+    length = 0;
+    for (i = 0; i < cnt; ++i)
     {
-        **str_new = *str1++;
-        ++str_new;
-    }
-    while (*str2 != '\0')
-    {
-        **str_new = *str2++;
-        ++str_new;
+        int j = rand() % (cnt);
+        str_cat(*str_new, str_array[j], &length);
+        //    printf("%s %d\n", *str_new, j);
     }
     return 0;
 }
-/*
-int cat_rundom_str(char *str, char **str_new, int seed, int cnt)
-{
-    int i = srand(seed);
-    printf("%d\n", i);
-    for (i = 0; i < cnt)
-}*/
