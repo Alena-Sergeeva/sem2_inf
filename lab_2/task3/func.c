@@ -35,64 +35,34 @@ typedef struct Result
     int index;
 } Result;
 
-int full_suf_array(int *suf, char *str)
+int full_suf_array(int **suf, char *str)
 {
     int i = 1, j = 0;
-    (suf)[0] = 0;
+    if (((*suf) == NULL) || (str == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    (*suf)[0] = 0;
     while (str[i] != '\0')
     {
         if (str[i] != str[j])
         {
             if (j == 0)
             {
-                ++i;
-                (suf)[i] = 0;
-            }
-            else
-            {
-                j = (suf)[j - 1];
-            }
-        }
-        else
-        {
-            (suf)[i] = j + 1;
-            ++i;
-            ++j;
-        }
-    }
-    return 0;
-}
-// вернет указатель на первое вхождение строки
-int find_str(char *buf, char *exampl, int *suf, int *res)
-{
-    int i = 0, j = 0;
-    if ((buf == NULL) || (exampl == NULL) || (suf == NULL) || (res == NULL))
-    {
-        return WRONG_POINTER;
-    }
-    *res = (-1);
-    while ((buf[i] != '\n') && (buf[i] != '\0') && (exampl[j] != '\0'))
-    {
-        if (buf[i] == exampl[j])
-        {
-            ++i;
-            ++j;
-        }
-        else
-        {
-            if (j == 0)
-            {
+                (*suf)[i] = 0;
                 ++i;
             }
             else
             {
-                j = suf[j - 1];
+                j = (*suf)[j - 1];
             }
         }
-    }
-    if (exampl[j] == '\0')
-    {
-        *res = i - j + 1;
+        else
+        {
+            (*suf)[i] = j + 1;
+            ++i;
+            ++j;
+        }
     }
     return 0;
 }
@@ -142,59 +112,79 @@ void print_and_clear(Result **head, Result **top, char *file_name, int fl_err)
     }
     while (*head != *top)
     {
-        printf("%d %d\n", (*head)->line, (*head)->index);
+        printf("в %d строке на %d позиции\n", (*head)->line, (*head)->index);
         temp_pointer = (*head)->next;
         free(*head);
         *head = temp_pointer;
     }
-    // printf("%d %d\n", (*head)->line, (*head) -> index);
+    free(*head);
+    *top = NULL;
+    *head = NULL;
     return;
 }
 
 int read_file(char *file_in, char *str, int *suf)
 {
     FILE *fin = NULL;
-    int i = 1, index = 0, ost = 0;
-    size_t str_length = strlen(str);
-    char buf[BUFSIZE];
-    char *buf_begin = buf;
-    enum err mistake = 0;
+    int line = 1, i = 0, j = 0, index = 0;
+    char c = ' ';
     Result *head = NULL;
     Result *top = NULL;
+    if ((str == NULL) || (suf == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    if ((fin = fopen(file_in, "r")) == NULL)
+    {
+        return FILE_NOT_OPEN;
+    }
     if (create_result_list(&head))
     {
         return MEMMORY_ERROR;
     }
     top = head;
-    if ((fin = fopen(file_in, "r")) == NULL)
+    while (!feof(fin))
     {
-        return FILE_NOT_OPEN;
-    }
-    while (fgets(buf, 256, fin) != NULL)
-    {
-        buf_begin = buf;
-        if (mistake = find_str(buf, str, suf, &index))
+        c = fgetc(fin);
+        if (c == str[j])
         {
-            return mistake;
+            ++i;
+            ++j;
         }
-        while (index != (-1))
+        else
         {
-            if (mistake = add_elem(head, &top, i, index + (buf_begin - buf + 1)))
+            if (j == 0)
+            {
+                ++i;
+            }
+            else
+            {
+                while ((c != str[j]) && (j != 0))
+                {
+                    j = suf[j - 1];
+                }
+                ++i;
+            }
+        }
+        if (str[j] == '\0')
+        {
+            index = i - j + 1;
+            j = 0;
+            if (add_elem(head, &top, line, index))
             {
                 print_and_clear(&head, &top, file_in, 1);
-            }
-            buf_begin += (index - 1 + str_length - 1);
-            if (mistake = find_str(buf_begin, str, suf, &index))
-            {
-                return mistake;
+                fclose(fin);
+                return MEMMORY_ERROR;
             }
         }
-        ++i;
+        if (c == '\n')
+        {
+            i = 0;
+            j = 0;
+            ++line;
+        }
     }
     print_and_clear(&head, &top, file_in, 0);
-    free(head);
-    head = NULL;
-    top = head;
     fclose(fin);
     return 0;
 }
@@ -202,19 +192,26 @@ int read_file(char *file_in, char *str, int *suf)
 int find_str_in_files(char *str, int cnt, ...)
 {
     va_list iterator;
-    int str_length = strlen(str);
-    int suf[str_length], i = 0;
-    char *file_in;
-    enum err mistake;
+    int *suf = NULL;
+    int i = 0;
+    char *file_in = NULL;
+    enum err mistake = 0;
     if (str == NULL)
     {
         return WRONG_POINTER;
     }
     if (cnt <= 0)
     {
-        WRONG_CNT;
+        return WRONG_CNT;
     }
-    full_suf_array(suf, str);
+    if (!(suf = (int *)malloc(sizeof(int) * strlen(str))))
+    {
+        return MEMMORY_ERROR;
+    }
+    if (full_suf_array(&suf, str))
+    {
+        return WRONG_POINTER;
+    }
     va_start(iterator, cnt);
     for (i = 0; i < cnt; ++i)
     {
@@ -225,11 +222,26 @@ int find_str_in_files(char *str, int cnt, ...)
         }
     }
     va_end(iterator);
+    free(suf);
     return 0;
 }
 
 int main()
 {
-    enum err mistake = find_str_in_files("pppp", 2, "test1.txt", "test2.txt");
+    switch (find_str_in_files("liillillil", 2, "test1.txt", "test2.txt"))
+    {
+    case MEMMORY_ERROR:
+        printf("Не удалось выделить памят\n");
+        break;
+    case WRONG_POINTER:
+        printf("Передан нулевой указатель\n");
+        break;
+    case WRONG_CNT:
+        printf("Колличество аргументов должно быть положительным\n");
+        break;
+    case FILE_NOT_OPEN:
+        printf("Файл не удалось открыть\n");
+        break;
+    }
     return 0;
 }
