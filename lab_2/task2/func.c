@@ -16,7 +16,7 @@ int check_double_overflow(double x)
     {
         return OVER_FLOW;
     }
-    return 0;
+    return OK;
 }
 /*среднее геометрическое переданных ей чисел вещественного типа. Количество (значение типа int)
 переданных вещественных чисел задаётся в качестве последнего обязательного параметра функции*/
@@ -47,7 +47,7 @@ int geometric_mean(double *res, int cnt, ...)
     {
         return OVER_FLOW;
     }
-    return 0;
+    return OK;
 }
 
 /*рекурсивная функция возведения вещественного числа в целую
@@ -112,6 +112,7 @@ void print_res(enum err mistake, double res)
         break;
     }
 }
+
 int main()
 {
     double res = 1.0;
@@ -123,4 +124,5 @@ int main()
     res = 1.0;
     mistake = power_int(2, -8, &res);
     print_res(mistake, res);
+    return 0;
 }
