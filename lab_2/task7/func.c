@@ -51,7 +51,7 @@ int find_solutions(double a, double b, double eps, double *res, double (*func)(d
     }
     while (b - a >= 2 * eps)
     {
-        printf("%.15lf %.15lf \n", func(a), func(b));
+        // printf("%.15lf %.15lf \n", func(a), func(b));
         if (func(c) * func(a) < 0)
         {
             b = c;
@@ -60,7 +60,7 @@ int find_solutions(double a, double b, double eps, double *res, double (*func)(d
         {
             if (func(c) * func(a) == 0)
             {
-                printf("%.15lf %.15lf \n", func(c), func(a));
+                //    printf("%.15lf %.15lf \n", func(c), func(a));
                 *res = (func(c) == 0) ? c : a;
             }
             a = c;
