@@ -1,9 +1,100 @@
-#include "str_oper_valid.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <ctype.h>
+
+enum err
+{
+    OK,
+    NOT_NUM,
+    WRONG_FLAG,
+    UINT_OVERFLOW,
+    WRONG_POINTER,
+    MEMORY_ERROR,
+    ARGUMETS,
+    NEGATIVE
+};
+
+int strlength(char *str, size_t *length);
+int reverse(char **str_new, char *str);
+int up_letter(char **str_new, char *str);
+int str_cat(char *str_new, char *str1, size_t *length_str_new);
+int group_str(char **new_str, char *str);
+int cat_random_str(char *str_array[], char **str_new, int seed, int cnt);
+int valid(int argc, char *argv[], char *fl, unsigned int *seed);
+
+int main(int argc, char *argv[])
+{
+    char fl = ' ';
+    enum err mistake = 0;
+    unsigned int seed = 0;
+    size_t length = 0;
+    char *str_new = NULL;
+    switch (valid(argc, argv, &fl, &seed))
+    {
+    case OK:
+        switch (fl)
+        {
+        case 'l':
+            mistake = strlength(argv[2], &length);
+            break;
+        case 'r':
+            mistake = reverse(&str_new, argv[2]);
+            break;
+        case 'u':
+            mistake = up_letter(&str_new, argv[2]);
+            break;
+        case 'n':
+            mistake = group_str(&str_new, argv[2]);
+            break;
+        case 'c':
+            cat_random_str(argv + 3, &str_new, seed, argc - 3);
+            break;
+        }
+        if (mistake == MEMORY_ERROR)
+        {
+            printf("Не удалось выделить память\n");
+            return 0;
+        }
+        if (mistake == WRONG_POINTER)
+        {
+            printf("Был передан неправильный адресс\n");
+            return 0;
+        }
+        if (str_new == NULL)
+        {
+            printf("%ld\n", length);
+        }
+        else
+        {
+            printf("%s\n", str_new);
+            free(str_new);
+            str_new = NULL;
+        }
+        break;
+    case WRONG_FLAG:
+        printf("Флаг введен не верно\n");
+        break;
+    case NOT_NUM:
+        printf("seed должно быть десятичным целым числом\n");
+        break;
+    case UINT_OVERFLOW:
+        printf("переполнение типа unsigned int\n");
+        break;
+    case ARGUMETS:
+        printf("Введено неверное колличество аргументов\n");
+        break;
+    case NEGATIVE:
+        printf("seed должно быть неотрицательным\n");
+        break;
+    }
+    return 0;
+}
 
 //-l подсчёт длины переданной строки, переданной вторым аргументом;
 int strlength(char *str, size_t *length)
 {
-    if (!length)
+    if ((!length) || (str == NULL))
     {
         return WRONG_POINTER;
     }
@@ -12,14 +103,18 @@ int strlength(char *str, size_t *length)
     {
         ++(*length);
     }
-    return 0;
+    return OK;
 }
 
 int check_unsigned_int(char *str, unsigned int *x)
 {
     unsigned int res = 0;
     int sign = 0;
-    printf("%s", str);
+    if ((str == NULL) || (x == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    // printf("%s", str);
     if (*str == '-')
     {
         sign = -1;
@@ -46,17 +141,18 @@ int check_unsigned_int(char *str, unsigned int *x)
         return NEGATIVE;
     }
     *x = res;
-    return 0;
+    return OK;
 }
 int valid(int argc, char *argv[], char *fl, unsigned int *seed)
 {
     enum err mistake = 0;
+    int is_fl = 0;
     if (argc < 3)
     {
         return ARGUMETS;
     }
     *fl = argv[1][1];
-    int is_fl = (('u' == *fl) || ('l' == *fl) || ('r' == *fl) || ('u' == *fl) || ('n' == *fl) || ('c' == *fl));
+    is_fl = (('u' == *fl) || ('l' == *fl) || ('r' == *fl) || ('u' == *fl) || ('n' == *fl) || ('c' == *fl));
     if (!((argv[1][0] == '-') && (is_fl) && (argv[1][2] == '\0')))
     {
         return WRONG_FLAG;
@@ -71,19 +167,19 @@ int valid(int argc, char *argv[], char *fl, unsigned int *seed)
         {
             return mistake;
         }
-        return 0;
+        return OK;
     }
     if (argc > 3)
     {
         return ARGUMETS;
     }
-    return 0;
+    return OK;
 }
 
 //-r получить новую строку, являющуюся перевёрнутой (reversed) переданной вторым аргументом строкой;
-int reverse(char **str_new, char const *str)
+int reverse(char **str_new, char *str)
 {
-    size_t length = 0, i;
+    size_t length = 0, i = 0;
     if (strlength((char *)str, &length))
     {
         return WRONG_POINTER;
@@ -97,19 +193,15 @@ int reverse(char **str_new, char const *str)
         *(*str_new + i) = *(str + length - i - 1);
     }
     *(*str_new + i) = '\0';
-    return 0;
+    return OK;
 }
 /*-u получить новую строку, идентичную переданной вторым аргументом, при этом
 каждый символ, стоящий на нечётной позиции (первый символ строки находится на
 позиции 0), должен быть преобразован в верхний регистр;*/
-int up_letter(char **str_new, char const *str)
+int up_letter(char **str_new, char *str)
 {
     size_t length = 0;
     int i = 0;
-    if (!str)
-    {
-        return WRONG_POINTER;
-    }
     if (strlength((char *)str, &length))
     {
         return WRONG_POINTER;
@@ -135,11 +227,10 @@ int group_str(char **new_str, char *str)
 {
     size_t length = 0;
     int i = 0;
-    enum err mistake = 0;
     int end_str_new = 0;
-    if ((mistake = strlength(str, &length)) != 0)
+    if (strlength(str, &length))
     {
-        return mistake;
+        return WRONG_POINTER;
     }
     if (!(*new_str = (char *)malloc(sizeof(char) * ((length) + 1))))
     {
@@ -167,7 +258,7 @@ int group_str(char **new_str, char *str)
             (*new_str)[end_str_new++] = str[i];
         }
     }
-    return 0;
+    return OK;
 }
 
 /*-c получить новую строку, являющуюся конкатенацией второй, четвёртой, пятой и т.
@@ -179,31 +270,37 @@ int str_cat(char *str_new, char *str1, size_t *length_str_new)
 {
     size_t length1 = 0;
     int i = 0;
-    enum err mistake = 0;
-    if (mistake = strlength(str1, &length1))
+    if ((str_new == NULL) || (str1 == NULL) || (length_str_new == NULL))
     {
-        return mistake;
+        return WRONG_POINTER;
+    }
+    if (strlength(str1, &length1))
+    {
+        return WRONG_POINTER;
     }
     for (i = 0; i <= length1; ++i)
     {
         str_new[*length_str_new + i] = str1[i];
     }
     (*length_str_new) += length1;
-    return 0;
+    return OK;
 }
 
 int cat_random_str(char *str_array[], char **str_new, int seed, int cnt)
 {
     size_t length = 0;
-    int i, capacity = 0;
-    enum err mistake = 0;
+    int i = 0, capacity = 0;
+    if (str_array == NULL)
+    {
+        return WRONG_POINTER;
+    }
     srand(seed);
-    *str_new = "\0";
+    //*str_new = "\0";
     for (i = 0; i < cnt; ++i)
     {
-        if (mistake = strlength(str_array[i], &length))
+        if (strlength(str_array[i], &length))
         {
-            return mistake;
+            return WRONG_POINTER;
         }
         capacity += length;
     }
@@ -214,9 +311,9 @@ int cat_random_str(char *str_array[], char **str_new, int seed, int cnt)
     length = 0;
     for (i = 0; i < cnt; ++i)
     {
-        int j = rand() % (cnt);
+        int j = rand() % cnt;
         str_cat(*str_new, str_array[j], &length);
         //    printf("%s %d\n", *str_new, j);
     }
-    return 0;
+    return OK;
 }
