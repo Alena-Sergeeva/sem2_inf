@@ -36,14 +36,13 @@ int strlength(char *str, int *length)
     {
     }
     *length = str_end - str - 1;
-    return 0;
+    return OK;
 }
 
 int miss_nuls(char **str_res)
 {
-    if (str_res == NULL)
+    if ((str_res == NULL) || (*str_res == NULL))
     {
-        *str_res = NULL;
         return WRONG_POINTER;
     }
     while (**str_res == '0')
@@ -54,11 +53,15 @@ int miss_nuls(char **str_res)
     {
         (*str_res)--;
     }
-    return 0;
+    return OK;
 }
 
 int to_int(char c, int *num, int base)
 {
+    if (num == NULL)
+    {
+        return WRONG_POINTER;
+    }
     *num = base;
     if ((c >= 'a') && (c <= 'z'))
     {
@@ -76,12 +79,16 @@ int to_int(char c, int *num, int base)
     {
         return NOT_IN_THIS_BASE;
     }
-    return 0;
+    return OK;
 }
 
 int check_enogth_mem(char **buf, int *capacity, int max_length, int length1)
 {
     char *buf_old_end = NULL, *new_buf = NULL;
+    if ((capacity == NULL) || (buf == NULL) || (*buf == NULL))
+    {
+        return WRONG_POINTER;
+    }
     if (max_length + 1 >= *capacity)
     {
         // printf("ll");
@@ -112,7 +119,7 @@ int check_enogth_mem(char **buf, int *capacity, int max_length, int length1)
         free(*buf);
         *buf = new_buf;
     }
-    return 0;
+    return OK;
 }
 
 int sum_num_b(char **buf, char **str1, char *str2, int base, int *capacity)
@@ -120,6 +127,10 @@ int sum_num_b(char **buf, char **str1, char *str2, int base, int *capacity)
     int i = 0, length1 = 0, length2 = 0, num1 = 0, num2 = 0, num = 0, ost = 0;
     char *buf_begin = NULL, *buf_old = NULL;
     enum err mistake = 0;
+    if ((buf == NULL) || (*buf == NULL) || (capacity == NULL))
+    {
+        return WRONG_POINTER;
+    }
     if (miss_nuls(str1) || miss_nuls(&str2))
     {
         return WRONG_POINTER;
@@ -174,7 +185,7 @@ int sum_num_b(char **buf, char **str1, char *str2, int base, int *capacity)
     {
         (*str1)++;
     }
-    return 0;
+    return OK;
 }
 
 int sum_base(char **buf, char **str1, int base, int cnt, ...)
@@ -183,6 +194,10 @@ int sum_base(char **buf, char **str1, int base, int cnt, ...)
     int i = 0, capacity = 2;
     char *str2 = NULL;
     enum err mistake = 0;
+    if ((buf == NULL) || (str1 == NULL))
+    {
+        return WRONG_POINTER;
+    }
     if (cnt <= 0)
     {
         return CNT_ARGUMENTS;
@@ -191,8 +206,7 @@ int sum_base(char **buf, char **str1, int base, int cnt, ...)
     {
         return WRONG_BASE;
     }
-    *buf = (char *)malloc(sizeof(char) * capacity);
-    if (*buf == NULL)
+    if (!(*buf = (char *)malloc(sizeof(char) * capacity)))
     {
         return MEMORY_ERROR;
     }
@@ -207,17 +221,18 @@ int sum_base(char **buf, char **str1, int base, int cnt, ...)
         if (mistake)
         {
             *str1 = str2;
+
             return mistake;
         }
     }
     va_end(iterator);
-    return 0;
+    return OK;
 }
 
 int main()
 {
     char *buf = NULL, *str_res = NULL;
-    int base = 36;
+    int base = -9;
     int length = 0;
     switch (sum_base(&buf, &str_res, base, 4, "08", "00000ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "0000000000000", "1"))
     {
