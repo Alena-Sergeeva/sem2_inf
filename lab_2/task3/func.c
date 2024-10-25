@@ -17,8 +17,6 @@ strncmp из заголовочного файла string.h. Продемонс�
 #include <stdlib.h>
 #include <stdarg.h>
 
-#define BUFSIZE 256
-
 enum err
 {
     OK,
@@ -64,10 +62,10 @@ int full_suf_array(int **suf, char *str)
             ++j;
         }
     }
-    return 0;
+    return OK;
 }
 
-int add_elem(Result *head, Result **top, int line1, int index1)
+int add_elem(Result **top, int line1, int index1)
 {
     Result *top_new = NULL;
     if (*top == NULL)
@@ -82,7 +80,7 @@ int add_elem(Result *head, Result **top, int line1, int index1)
     }
     (*top)->next = top_new;
     *top = top_new;
-    return 0;
+    return OK;
 }
 
 int create_result_list(Result **res)
@@ -91,7 +89,7 @@ int create_result_list(Result **res)
     {
         return MEMMORY_ERROR;
     }
-    return 0;
+    return OK;
 }
 
 void print_and_clear(Result **head, Result **top, char *file_name, int fl_err)
@@ -170,7 +168,7 @@ int read_file(char *file_in, char *str, int *suf)
         {
             index = i - j + 1;
             j = 0;
-            if (add_elem(head, &top, line, index))
+            if (add_elem(&top, line, index))
             {
                 print_and_clear(&head, &top, file_in, 1);
                 fclose(fin);
@@ -186,7 +184,7 @@ int read_file(char *file_in, char *str, int *suf)
     }
     print_and_clear(&head, &top, file_in, 0);
     fclose(fin);
-    return 0;
+    return OK;
 }
 
 int find_str_in_files(char *str, int cnt, ...)
@@ -210,6 +208,7 @@ int find_str_in_files(char *str, int cnt, ...)
     }
     if (full_suf_array(&suf, str))
     {
+        free(suf);
         return WRONG_POINTER;
     }
     va_start(iterator, cnt);
@@ -218,12 +217,13 @@ int find_str_in_files(char *str, int cnt, ...)
         file_in = va_arg(iterator, char *);
         if (mistake = read_file(file_in, str, suf))
         {
+            free(suf);
             return mistake;
         }
     }
     va_end(iterator);
     free(suf);
-    return 0;
+    return OK;
 }
 
 int main()
