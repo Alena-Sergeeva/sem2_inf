@@ -54,10 +54,14 @@ int geometric_mean(double *res, int cnt, ...)
 степень. При реализации используйте алгоритм быстрого возведения в степень.*/
 int power(double num, int exponent, double *res)
 {
+    if (!res)
+    {
+        return WRONG_POINTER;
+    }
     if (exponent == 1)
     {
         *res = num;
-        return 0;
+        return OK;
     }
     power(num, exponent >> 1, res);
     if (check_double_overflow((*res) * (*res)))
@@ -73,7 +77,7 @@ int power(double num, int exponent, double *res)
         }
         (*res) *= num;
     }
-    return 0;
+    return OK;
 }
 
 int power_int(double num, int exponent, double *res)
