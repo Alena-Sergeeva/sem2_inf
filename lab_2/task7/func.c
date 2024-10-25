@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#define BUFSIZE 256
-
 enum err
 {
     OK,
@@ -10,7 +8,8 @@ enum err
     NO_SOLUTIONS,
     WRONG_EPS,
     NOT_GOOD_FUNC_ONTHIS_DIAP,
-    SOLUTIONS_ON_BOARD
+    SOLUTIONS_ON_BOARD,
+    WRONG_POINTER
 };
 
 /*Реализуйте функцию, которая находит корень уравнения одной переменной методом
@@ -31,7 +30,10 @@ double func9(double x);
 int find_solutions(double a, double b, double eps, double *res, double (*func)(double x))
 {
     double c = (b + a) / 2;
-
+    if (res == NULL)
+    {
+        return WRONG_POINTER;
+    }
     if (a >= b)
     {
         return WRONG_DIAP;
@@ -51,7 +53,6 @@ int find_solutions(double a, double b, double eps, double *res, double (*func)(d
     }
     while (b - a >= 2 * eps)
     {
-        // printf("%.15lf %.15lf \n", func(a), func(b));
         if (func(c) * func(a) < 0)
         {
             b = c;
@@ -60,22 +61,20 @@ int find_solutions(double a, double b, double eps, double *res, double (*func)(d
         {
             if (func(c) * func(a) == 0)
             {
-                //    printf("%.15lf %.15lf \n", func(c), func(a));
                 *res = (func(c) == 0) ? c : a;
             }
             a = c;
         }
-
         c = (b + a) / 2;
     }
     *res = c;
-    return 0;
+    return OK;
 }
 
 int main()
 {
     double res = 0;
-    switch (find_solutions(-0.5, 22.0, 0.1e-10, &res, func7))
+    switch (find_solutions(-2, 22.0, 0.1e-10, &res, func4))
     {
     case OK:
         printf("%.15lf\n", res);
@@ -91,6 +90,9 @@ int main()
         break;
     case NOT_GOOD_FUNC_ONTHIS_DIAP:
         printf("Значение из интервала выходит за область определения функции\nлибо значение функции на интервале слишком велики и не помещаются в double\n");
+        break;
+    case WRONG_POINTER:
+        printf("В функцию передан указатель на NULL");
         break;
     }
     return 0;
