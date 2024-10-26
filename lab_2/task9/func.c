@@ -76,6 +76,7 @@ int is_end_dec(double num, int base, enum err *res)
     {
         return WRONG_POINTER;
     }
+    printf("%ld ", denominator / del);
     if (is_base_degree(denominator / del, base, res))
     {
         return WRONG_POINTER;
@@ -152,7 +153,8 @@ int main()
 {
     enum err mistake = 0;
     enum err *res = NULL;
-    int cnt = 5;
+    int cnt = 4;
+    // base = 10!!!!!!!!!!!!! не работает
     switch (is_ending_in_this_base(&res, 4, cnt, 1.6666666666666667, 0.125, 0.0625, 0.0, -1.9))
     {
     case OK:

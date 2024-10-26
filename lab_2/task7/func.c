@@ -74,7 +74,7 @@ int find_solutions(double a, double b, double eps, double *res, double (*func)(d
 int main()
 {
     double res = 0;
-    switch (find_solutions(-2, 22.0, 0.1e-10, &res, func4))
+    switch (find_solutions(1 - 1e-10, 22.0, 1e-10, &res, func8))
     {
     case OK:
         printf("%.15lf\n", res);
@@ -138,12 +138,12 @@ double func5(double x)
 //(0; 2) 1
 double func6(double x)
 {
-    return sqrt(x) - 1;
+    return pow(x - 1, 4) / (x - 1);
 }
 // не имеет решений
 double func8(double x)
 {
-    return sqrt(x) + 1;
+    return (x - 1) * (x - 1);
 }
 
 //(-0.5; 2)
