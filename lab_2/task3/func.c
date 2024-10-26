@@ -141,11 +141,17 @@ int read_file(char *file_in, char *str, int *suf)
         return MEMMORY_ERROR;
     }
     top = head;
+    int line1 = 1;
     while (!feof(fin))
     {
         c = fgetc(fin);
         if (c == str[j])
         {
+            if (j == 0)
+            {
+                line1 = line;
+                index = i;
+            }
             ++i;
             ++j;
         }
@@ -166,9 +172,8 @@ int read_file(char *file_in, char *str, int *suf)
         }
         if (str[j] == '\0')
         {
-            index = i - j + 1;
             j = 0;
-            if (add_elem(&top, line, index))
+            if (add_elem(&top, line1, index))
             {
                 print_and_clear(&head, &top, file_in, 1);
                 fclose(fin);
@@ -178,8 +183,11 @@ int read_file(char *file_in, char *str, int *suf)
         if (c == '\n')
         {
             i = 0;
-            j = 0;
             ++line;
+        }
+        if (line == 8)
+        {
+            printf(" %d ", c);
         }
     }
     print_and_clear(&head, &top, file_in, 0);
@@ -228,7 +236,9 @@ int find_str_in_files(char *str, int cnt, ...)
 
 int main()
 {
-    switch (find_str_in_files("liillillil", 2, "test1.txt", "test2.txt"))
+    // сделать этот тест, читать файл не по строчкам (не по слешенам) вести отсчет
+    // find_str_in_files("123\n\n  \n\n321", 2, "test1.txt", "test2.txt")
+    switch (find_str_in_files("     6756t\n", 2, "test1.txt", "test2.txt"))
     {
     case MEMMORY_ERROR:
         printf("Не удалось выделить памят\n");
