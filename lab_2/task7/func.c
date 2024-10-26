@@ -74,6 +74,8 @@ int find_solutions(double a, double b, double eps, double *res, double (*func)(d
 int main()
 {
     double res = 0;
+    // разобрать теорию! пуксреньк с 8 и 6(неправильный ответ, должно не работать, у тебя выводит ~3.999
+    // должно должно не работать так как принцип Дихотомии нарушается) тестом
     switch (find_solutions(1 - 1e-10, 22.0, 1e-10, &res, func8))
     {
     case OK:
