@@ -131,7 +131,7 @@ int read_file(char *file_name, Employe **res, int *count)
         fclose(fin);
         return MEMMORY_ERROR;
     }
-    while ((cnt_arg = fscanf(fin, "%d\n%60s\n%60s\n%d\n", &((*res)[i].id), (*res)[i].name, (*res)[i].surname, &((*res)[i].salary))) == 4)
+    while ((cnt_arg = fscanf(fin, "%d\n%59s\n%59s\n%d\n", &((*res)[i].id), (*res)[i].name, (*res)[i].surname, &((*res)[i].salary))) == 4)
     {
         if ((*res)[i].id < 0)
         {
@@ -363,16 +363,16 @@ int main(int argc, char *argv[])
         }
         break;
     case WRONG_EMPLOYER:
-        printf("поля работника недописаны либо нарушен формат");
+        printf("данные работника записаны некоректно\n");
         break;
     case WRONG_NAME:
         printf("имя должно содержать только латинские буквы");
         break;
     case WRONG_SALARY:
-        printf("Зарплата должна быть целым неотрицательным числом\n");
+        printf("Зарплата должна быть целым неотрицательным числом, либо произошло переполнение типа int\n");
         break;
     case WRONG_ID:
-        printf("ID должно быть целым неотрицательным числом\n");
+        printf("ID должно быть целым неотрицательным числом, либо произошло переполнение типа int\n");
         break;
     case FILE_EMPTY:
         printf("Файл не содержит данных\n");
@@ -386,11 +386,8 @@ int main(int argc, char *argv[])
     case WRONG_POINTER:
         printf("передан нулевой указатель\n");
         break;
-    case TOO_LONG_NAME:
-        printf("Длина имени должна быть меньше 60\n");
-        break;
     case WRONG_SURNAME:
-        printf("имя должно содержать только латинские буквы\n");
+        printf("фамилия должна содержать только латинские буквы\n");
         break;
     case OVERFLOW_INT:
         printf("Переполнение типа int\n");
