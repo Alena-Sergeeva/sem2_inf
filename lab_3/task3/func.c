@@ -20,7 +20,7 @@
 enum err
 {
     OK,
-    SAME_PATH,
+    SAME_NAME,
     FILE_EMPTY,
     WRONG_EMPLOYER,
     WRONG_NAME,
@@ -54,7 +54,7 @@ int check_capacity_and_realloc(Employe **res, int i, int *capacity)
     }
     if (i >= *capacity)
     {
-        if (*capacity << 1 > __INT_MAX__)
+        if (*capacity << 1 <= 0)
         {
             return OVERFLOW_INT;
         }
@@ -222,7 +222,7 @@ int cmp_up(const void *a, const void *b)
         {
             if ((res = strcmp(((Employe *)a)->name, ((Employe *)b)->name)) != 0)
             {
-                printf("%d\n", res);
+                // printf("%d\n", res);
                 return res;
             }
             else
@@ -287,10 +287,10 @@ int check_same_file_name(char *file1, char *file2)
     {
         ++j;
     }
-    printf("%c %c", file1[i], file2[j]);
+    // printf("%c %c", file1[i], file2[j]);
     if ((file1[i] == file2[j]))
     {
-        return SAME_PATH;
+        return SAME_NAME;
     }
     return OK;
 }
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
     case WRONG_FLAG:
         printf("неверный флаг\n");
         break;
-    case SAME_PATH:
+    case SAME_NAME:
         printf("имена файлов одинаковые\n");
         break;
     }
