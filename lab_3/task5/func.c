@@ -18,7 +18,9 @@ enum err
     FILE_EMPTY,
     SAME_NAME,
     ARGUMENTS_CNT,
-    FOUND
+    FOUND,
+    NOT_FOUND,
+    PRINTED
 };
 /*
 Экземпляр структуры типа Student содержит поля: id студента (целое неотрицательное
@@ -31,32 +33,11 @@ typedef struct Student
     int id;
     char name[60];
     char surname[60];
-    char group[30];
+    char group[60];
     unsigned char *marks;
     double arifm_mean_mark;
 } Student;
 
-/* Через аргументы
-командной строки программе на вход подаётся путь к файлу, содержащему записи о
-студентах. При старте программа считывает поданный файл в динамический массив
-структур типа Student. В программе должен быть реализован поиск всех студентов по:
-● id;
-● фамилии;
-● имени;
-● группе,
-сортировка (для сортировки необходимо передавать компаратор для объектов структур)
-студента(-ов) по:
-● id;
-● фамилии;
-● имени;
-● группе.
-Добавьте возможность вывода в трассировочный файл (путь к файлу передаётся как
-аргумент командной строки) данные найденного по id студента: ФИО, группу и
-среднюю оценку за экзамены. Также добавьте возможность вывести в трассировочный
-файл фамилии и имена студентов, чей средний балл за все экзамены выше среднего
-балла за все экзамены по всем считанным из файла студентам. Все вышеописанные
-опции должны быть выполнимы из контекста интерактивного диалога с пользователем.
-*/
 int check_name_or_surname(char *str)
 {
     char c;
@@ -124,6 +105,7 @@ int read_file(char *file_name, Student **res, int *count, double *arif_mean_mark
     enum err mistake = 0;
     int cnt_arg = 0;
     double sum_student = 0.0, sum_all = 0.0;
+    int num = 0;
     if ((res == NULL) || (count == NULL) || (arif_mean_marks_all == NULL))
     {
         return WRONG_POINTER;
@@ -139,16 +121,16 @@ int read_file(char *file_name, Student **res, int *count, double *arif_mean_mark
         fclose(fin);
         return MEMMORY_ERROR;
     }
-    while ((cnt_arg = fscanf(fin, "%d\n%59s\n%59s\n%29s\n", &((*res)[i].id), (*res)[i].name, (*res)[i].surname, (*res)[i].group)) == 4)
+    (*res)[i].marks = NULL;
+    while ((cnt_arg = fscanf(fin, "ID: %d\nname: %59s\nsurname: %59s\ngroup: %59s\n", &((*res)[i].id), (*res)[i].name, (*res)[i].surname, (*res)[i].group)) == 4)
     {
         if ((*res)[i].id < 0)
         {
-
             fclose(fin);
             return INVALID_INPUT;
         }
         // printf("%u, %s, %s, %s\n", ((*res)[i].id), (*res)[i].name, (*res)[i].surname, ((*res)[i].group));
-        //   printf("%s", (*res)[i].name);
+        //    printf("%s", (*res)[i].name);
         if (mistake = check_name_or_surname((*res)[i].name))
         {
             // printf("%s\n", (*res)[i].name);
@@ -165,29 +147,51 @@ int read_file(char *file_name, Student **res, int *count, double *arif_mean_mark
             fclose(fin);
             return INVALID_INPUT;
         }
-        if (!((*res)[i].marks = (unsigned char *)malloc(sizeof(unsigned char) * (5 + 1))))
+        if (!((*res)[i].marks = (unsigned char *)malloc(sizeof(unsigned char) * (CNT_EXAMS))))
         {
             fclose(fin);
             return MEMMORY_ERROR;
         }
-        for (int j = 0; j < CNT_EXAMS; ++j)
+        *count = i + 1;
+        if (fscanf(fin, "marks: %d ", &num) != 1)
         {
-            fscanf(fin, "%hhu", ((*res)[i].marks + j));
-            sum_student += (*res)[i].marks[j];
-            printf("%d\n", __UINT8_MAX__);
-            printf("%d\n", (1 << ((sizeof(unsigned char))) - 1));
+            fclose(fin);
+            return INVALID_INPUT;
         }
+        if (((num < 0) || (num > __UINT8_MAX__)))
+        {
+            fclose(fin);
+            return INVALID_INPUT;
+        }
+        (*res)[i].marks[0] = num;
+        sum_student += (*res)[i].marks[0];
+        for (int j = 1; j < CNT_EXAMS; ++j)
+        {
+            if (fscanf(fin, " %d", &num) != 1)
+            {
+                fclose(fin);
+                return INVALID_INPUT;
+            }
+            if ((num < 0) || (num > __UINT8_MAX__))
+            {
+                fclose(fin);
+                return INVALID_INPUT;
+            }
+            (*res)[i].marks[j] = num;
+            sum_student += (*res)[i].marks[j];
+        }
+        fscanf(fin, "\n");
         (*res)[i].arifm_mean_mark = sum_student / CNT_EXAMS;
-        sum_all += sum_student;
+        sum_all += sum_student / CNT_EXAMS;
         if (mistake = check_capacity_and_realloc(res, i + 1, &capacity))
         {
             fclose(fin);
             return mistake;
         }
         ++i;
+        sum_student = 0.0;
     }
     fclose(fin);
-    *arif_mean_marks_all = sum_all / i;
     if (cnt_arg > -1)
     {
         return INVALID_INPUT;
@@ -196,6 +200,7 @@ int read_file(char *file_name, Student **res, int *count, double *arif_mean_mark
     {
         return FILE_EMPTY;
     }
+    *arif_mean_marks_all = sum_all / (i);
     *count = i;
     return OK;
 }
@@ -214,7 +219,7 @@ int print_res_in_consol(const Student *res, int count)
         {
             printf("%hhu ", res[i].marks[j]);
         }
-        printf("\n");
+        printf("\n\n");
     }
     return OK;
 }
@@ -223,9 +228,13 @@ int print_res_in_file(const char *file_name_out, const Student *res, int count)
 {
     int i = 0, j = 0;
     FILE *fout = NULL;
-    if ((file_name_out == NULL) || (res == NULL))
+    if ((file_name_out == NULL))
     {
         return WRONG_POINTER;
+    }
+    if (res == NULL)
+    {
+        return NOT_FOUND;
     }
     if (!(fout = fopen(file_name_out, "a")))
     {
@@ -233,11 +242,7 @@ int print_res_in_file(const char *file_name_out, const Student *res, int count)
     }
     for (i = 0; i < count; ++i)
     {
-        fprintf(fout, "ID: %u\nname: %s\nsurname: %s\ngroup: %s\nmarks:", res[i].id, res[i].name, res[i].surname, res[i].group);
-        for (j = 0; j < CNT_EXAMS; ++j)
-        {
-            fprintf(fout, " %hhu", res[i].marks[j]);
-        }
+        fprintf(fout, "name: %s\nsurname: %s\ngroup: %s\n%lf\n", res[i].name, res[i].surname, res[i].group, res[i].arifm_mean_mark);
         fprintf(fout, "\n");
     }
     fclose(fout);
@@ -289,7 +294,7 @@ int valid(
     }
     if ((file_name_input == NULL) || (file_name_output == NULL) || !argv[1])
     {
-        printf("lll");
+        // printf("lll");
         return WRONG_POINTER;
     }
     *file_name_output = NULL;
@@ -297,7 +302,7 @@ int valid(
     if (cnt == 3)
     {
         *file_name_output = argv[2];
-        if (mistake = check_same_file_name(argv[1], argv[3]))
+        if (mistake = check_same_file_name(argv[1], argv[2]))
         {
             return mistake;
         }
@@ -307,29 +312,21 @@ int valid(
 
 void printf_options()
 {
-    printf("a. Вывести в файл данные найденного по id студента: ФИО, группу и среднюю оценку\n");
-    printf("b. Вывести в файл фамилии и имена студентов, чей средний балл за все экзамены\nвыше среднего балла за все экзамены по всем студентам\n");
-    printf("c. Поиск студента по id: ");
-    printf("d. Поиск студента по фамилии: ");
-    printf("e. Поиск студента по имени: ");
-    printf("f. Поиск студента по группе: ");
-    printf("h. Сортировка масиива по id\n");
-    printf("i. Сортировка масиива по фамилии\n");
-    printf("j. Сортировка масиива по имени\n");
-    printf("k. Сортировка масиива по группе\n");
-    printf("z. Печать масиива на текущий момент в консоль\n");
+    printf("a. Вывести в файл данные найденного по id студента: ФИО, группу и среднюю оценку\n"
+           "b. Вывести в файл фамилии и имена студентов, чей средний балл за все экзамены\n"
+           "выше среднего балла за все экзамены по всем студентам\n"
+           "c. Поиск студента по id:\n"
+           "d. Поиск студента по фамилии:\n"
+           "e. Поиск студента по имени:\n "
+           "f. Поиск студента по группе:\n"
+           "h. Сортировка масива по id\n"
+           "i. Сортировка масива по фамилии\n"
+           "j. Сортировка масива по имени\n"
+           "k. Сортировка масива по группе\n"
+           "z. Печать масива на текущий момент в консоль\n");
 }
 
-int found_name(Student *st, void *name)
-{
-    if (strcmp(st->name, ((char *)name)) == 0)
-    {
-        return FOUND;
-    }
-    return OK;
-}
-
-int found_id(Student *st, void *id)
+int found_id(Student *st, const void *id)
 {
     if (st->id == *((unsigned int *)(id)))
     {
@@ -338,15 +335,62 @@ int found_id(Student *st, void *id)
     return OK;
 }
 
-int find(Student **res, int count, void *id, Student **stud_ptr, int (*func)(Student *, void *))
+int found_name(Student *st, const void *name)
 {
-    if ((res == NULL) || (*res == NULL) || (stud_ptr == NULL))
+    if (strcmp(st->name, ((char *)name)) == 0)
     {
-        printf("yyy");
+        return FOUND;
+    }
+    return OK;
+}
+
+int found_surname(Student *st, const void *surname)
+{
+    if (strcmp(st->surname, ((char *)surname)) == 0)
+    {
+        return FOUND;
+    }
+    return OK;
+}
+
+int found_group(Student *st, const void *group)
+{
+    if ((strcmp(st->group, (char *)(group))) == 0)
+    {
+        return FOUND;
+    }
+    return OK;
+}
+
+int cmp_id(const void *stud_a, const void *stud_b)
+{
+    return ((Student *)stud_a)->id - ((Student *)stud_b)->id;
+}
+
+int cmp_name(const void *stud_a, const void *stud_b)
+{
+    return strcmp(((Student *)stud_a)->name, ((Student *)stud_b)->name);
+}
+
+int cmp_surname(const void *stud_a, const void *stud_b)
+{
+    return strcmp(((Student *)stud_a)->surname, ((Student *)stud_b)->surname);
+}
+
+int cmp_group(const void *stud_a, const void *stud_b)
+{
+    return strcmp(((Student *)stud_a)->group, ((Student *)stud_b)->group);
+}
+
+int find(Student **res, int count, const void *id, Student **stud_ptr, int (*func)(Student *, const void *))
+{
+    int i;
+    if ((res == NULL) || (*res == NULL) || (stud_ptr == NULL) || (id == NULL))
+    {
         return WRONG_POINTER;
     }
     *stud_ptr = NULL;
-    int i;
+
     for (i = 0; i < count; ++i)
     {
         if (func((*res + i), id) == FOUND)
@@ -355,6 +399,73 @@ int find(Student **res, int count, void *id, Student **stud_ptr, int (*func)(Stu
             return OK;
         }
     }
+    return NOT_FOUND;
+}
+
+int read_str_and_find(Student *res, int count, Student **student_ptr, int (*func)(Student *, const void *))
+{
+    char c = ' ';
+    char str[60];
+    enum err mistake = 0;
+    if ((res == NULL) || (student_ptr == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    if ((scanf("%59s%c", str, &c) != 2) || (!isspace(c)))
+    {
+        while ((!isspace(c = getchar())) && (c != EOF))
+        {
+        }
+        return INVALID_INPUT;
+    }
+    mistake = find(&res, count, &str, student_ptr, func);
+    return mistake;
+}
+
+int find_students(char *file_out, Student *res, int count, double arif_mean_mark_all)
+{
+    FILE *fout = NULL;
+    int i = 0;
+    if ((res == NULL) || (file_out == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    if (!(fout = fopen(file_out, "a")))
+    {
+        return OUTPUT_FILE_NOT_OPEN;
+    }
+    for (i = 0; i < count; ++i)
+    {
+        if (res[i].arifm_mean_mark > arif_mean_mark_all)
+        {
+            fprintf(fout, "%s %s\n", res[i].surname, res[i].name);
+        }
+    }
+    // может может быть если у всех одинаковое среднее
+    if (i == 0)
+    {
+        return NOT_FOUND;
+    }
+    fprintf(fout, "\n");
+    fclose(fout);
+    return OK;
+}
+
+int clear_res(Student **res, int *count)
+{
+    int i;
+    if ((res == NULL) || (count == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    for (i = *count - 1; i >= 0; --i)
+    {
+        free((*res)[i].marks);
+        (*res)[i].marks = NULL;
+    }
+    *count = 0;
+    free(*res);
+    *res = NULL;
     return OK;
 }
 
@@ -373,7 +484,7 @@ int main(int argc, char *argv[])
     int count = 0, id = 0;
     enum err mistake = 0;
     double arif_mean_mark_all = 0.0;
-    char fl = ' ';
+    char fl = ' ', c = ' ';
     Student *student_ptr = NULL;
     switch (mistake = valid(argc, argv, &file_name_in, &file_name_out))
     {
@@ -391,9 +502,11 @@ int main(int argc, char *argv[])
     {
         return 0;
     }
-    printf_options();
     switch (mistake = read_file(file_name_in, &res, &count, &arif_mean_mark_all))
     {
+    case OK:
+        printf("Файл прочитан\n");
+        break;
     case INVALID_INPUT:
         printf("Неверные данные\n");
         break;
@@ -410,52 +523,149 @@ int main(int argc, char *argv[])
         printf("Файл не содержит данных\n");
         break;
     }
+
     if (mistake != OK)
     {
-        return 0;
-    }
-    while (scanf("%c\n", &fl) == 1)
-    {
-        if (strchr("abcdefghijkz", fl) == NULL)
+        if (clear_res(&res, &count))
         {
-            printf("Вы ввели бред\n");
+            printf("передан нулевой указатель\n");
         }
         else
         {
-            switch (fl)
-            {
-            // Вывести в файл данные найденного по id студента: ФИО, группу и среднюю оценку
-            case 'a':
-                // check 1234.123 122akak?
-                if (scanf("%d", &id) != 1)
-                {
-                    printf("пупупу, я хочу неотрицательное число");
-                }
-                find(&res, count, &id, &student_ptr, found_id);
-                if (student_ptr == NULL)
-                {
-                    printf("не найдено\n");
-                }
-                else
-                {
-                    print_res_in_consol(student_ptr, 1);
-                }
-                break;
-                /*case 'b':
-
-                                case c:
-                                case d:
-                                case e:
-                                case f:
-                                case g:
-                                case h:
-                                case i:
-                                case j:
-                                case k:
-                                case z:*/
-            }
-            id = 0;
-            student_ptr = NULL;
+            printf("\nпамять очищена\n");
         }
+        return 0;
     }
+    printf_options();
+    while (scanf("%c%c", &fl, &c) == 2)
+    {
+        if (c == EOF)
+        {
+            if (clear_res(&res, &count))
+            {
+                printf("передан нулевой указатель\n");
+            }
+            else
+            {
+                printf("\nпамять очищена\n");
+            }
+            return 0;
+        }
+
+        if ((strchr("abcdefghijkz", fl) == NULL) || (!isspace(c)))
+        {
+            printf("Такого выбора у вас нет\n");
+            while ((!isspace(c = getchar())) && (c != EOF))
+            {
+            }
+            continue;
+        }
+
+        printf("%c\n", fl);
+
+        switch (fl)
+        {
+        // Вывести в !!!!!!файл данные найденного по id студента: ФИО, группу и среднюю оценку
+        case 'a':
+            if ((scanf("%d%c", &id, &c) != 2) || (!isspace(c)))
+            {
+                printf("пупупу, я хочу целое неотрицательное число\n");
+                while ((!isspace(c = getchar())) && (c != EOF))
+                {
+                }
+                continue;
+            }
+            mistake = find(&res, count, &id, &student_ptr, found_id);
+            if ((mistake = print_res_in_file(file_name_out, student_ptr, 1)) == 0)
+            {
+                mistake = PRINTED;
+            }
+            break;
+        //"b. Вывести в файл фамилии и имена студентов, чей средний балл за все экзамены\n"
+        //"выше среднего балла за все экзамены по всем студентам\n"
+        case 'b':
+            if ((mistake = find_students(file_name_out, res, count, arif_mean_mark_all)) == 0)
+            {
+                mistake = PRINTED;
+            }
+            break;
+
+        case 'c':
+            if ((scanf("%d%c", &id, &c) != 2) || (!isspace(c)))
+            {
+                printf("пупупу, я хочу целое неотрицательное число\n");
+                while ((!isspace(c = getchar())) && (c != EOF))
+                {
+                }
+                continue;
+            }
+            mistake = find(&res, count, &id, &student_ptr, found_id);
+            break;
+        case 'e':
+            mistake = read_str_and_find(res, count, &student_ptr, found_name);
+            break;
+        //"d. Поиск студента по фамилии: "
+        case 'd':
+            mistake = read_str_and_find(res, count, &student_ptr, found_surname);
+            break;
+        // f. Поиск студента по группе
+        case 'f':
+            mistake = read_str_and_find(res, count, &student_ptr, found_group);
+            break;
+        // h. Сортировка масиива по id
+        case 'h':
+            qsort(res, count, sizeof(Student), cmp_id);
+            break;
+        //"i. Сортировка масиива по фамилии\n"
+        case 'i':
+            qsort(res, count, sizeof(Student), cmp_surname);
+            break;
+        //"j. Сортировка масиива по имени\n"
+        case 'j':
+            qsort(res, count, sizeof(Student), cmp_name);
+            break;
+        // k. Сортировка масиива по группе\n
+        case 'k':
+            qsort(res, count, sizeof(Student), cmp_group);
+            break;
+        // z. Печать масиива на текущий момент в консоль\n
+        case 'z':
+            print_res_in_consol(res, count);
+            break;
+        }
+        switch (mistake)
+        {
+        case OK:
+            print_res_in_consol(student_ptr, 1);
+            break;
+        case PRINTED:
+            printf("Результат записан в файл\n");
+            break;
+        case WRONG_POINTER:
+            printf("передан нулевой указатель\n");
+            break;
+        case OUTPUT_FILE_NOT_OPEN:
+            printf("Выходной файл не открылся\n");
+            break;
+        case INVALID_INPUT:
+            printf("Строка пустая, либо превышает размер буфера (255 символов)\n");
+            break;
+        case NOT_FOUND:
+            printf("не найдено\n");
+            break;
+        }
+        id = 0;
+        student_ptr = NULL;
+        mistake = 0;
+    }
+    // написать очистку массива, поля с оценками
+    if (clear_res(&res, &count))
+    {
+        printf("передан нулевой указатель");
+    }
+    else
+    {
+        printf("память очищена\n");
+    }
+    return 0;
 }
