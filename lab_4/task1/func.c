@@ -224,30 +224,9 @@ int hash_func(char *str, unsigned int *key)
     return OK;
 }
 
-int try_found_new_min(Elem **array, unsigned int size, unsigned int *min_i)
+int chek_min_max(Hash_table *table, unsigned int *max_i, unsigned int index)
 {
-    int i = 0;
-    if (min_i == NULL)
-    {
-        return WRONG_POINTER;
-    }
-    *min_i = size;
-    for (i; i < size; ++i)
-    {
-        if (array[i] != NULL)
-        {
-            if ((*min_i == size) || (array[i]->length < array[*min_i]->length))
-            {
-                *min_i = i;
-            }
-        }
-    }
-    return OK;
-}
-
-int chek_min_max(Hash_table *table, unsigned int *max_i, unsigned int *min_i, unsigned int index)
-{
-    if (!table || !max_i || !min_i)
+    if (!table || !max_i)
     {
         return WRONG_POINTER;
     }
@@ -255,19 +234,6 @@ int chek_min_max(Hash_table *table, unsigned int *max_i, unsigned int *min_i, un
     {
         *max_i = index;
     }
-    if (index == *min_i)
-    {
-        if (try_found_new_min(table->array, table->hashsize, min_i))
-        {
-            return WRONG_POINTER;
-        }
-        return OK;
-    }
-    if (*min_i == table->hashsize)
-    {
-        *min_i = index;
-    }
-
     return OK;
 }
 
@@ -285,7 +251,7 @@ int is_prime(unsigned int x, char *fl)
     return OK;
 }
 
-int rebild_hash_table(Hash_table **table, unsigned int *max_i, unsigned int *min_i)
+int rebild_hash_table(Hash_table **table, unsigned int *max_i)
 {
     int new_hashsize = 0;
     char fl = 0;
@@ -316,7 +282,6 @@ int rebild_hash_table(Hash_table **table, unsigned int *max_i, unsigned int *min
             return WRONG_POINTER;
         }
     }
-    *min_i = new_hashsize;
     *max_i = new_hashsize;
     printf("%d\n", new_hashsize);
 
@@ -344,7 +309,7 @@ int rebild_hash_table(Hash_table **table, unsigned int *max_i, unsigned int *min
                 }
 
                 (*table)->array[index]->length += 1;
-                if (chek_min_max(table_new, max_i, min_i, index))
+                if (chek_min_max(table_new, max_i, index))
                 {
                     clear_hach_table(&table_new);
                     return WRONG_POINTER;
@@ -366,15 +331,15 @@ int rebild_hash_table(Hash_table **table, unsigned int *max_i, unsigned int *min
     return OK;
 }
 
-int check_need_rebild(unsigned int max_col, unsigned int min_col, char *fl)
+int check_need_rebild(unsigned int max_col, char *fl)
 {
     if (!fl)
     {
         return WRONG_POINTER;
     }
     *fl = 0;
-    printf("max_col %d; min_col %d\n", max_col, min_col);
-    if (max_col / min_col >= 2)
+    printf("max_col %d\n", max_col);
+    if (max_col / 1 >= 2)
     {
         *fl = 1;
         printf("hhhh\n");
@@ -383,7 +348,7 @@ int check_need_rebild(unsigned int max_col, unsigned int min_col, char *fl)
     return OK;
 }
 
-int add_elem_to_table(Hash_table *table, char *def_name, char *value, unsigned int *min_i, unsigned int *max_i)
+int add_elem_to_table(Hash_table *table, char *def_name, char *value, unsigned int *max_i)
 {
     unsigned int key = 0, index;
     enum err mistake = OK;
@@ -421,7 +386,7 @@ int add_elem_to_table(Hash_table *table, char *def_name, char *value, unsigned i
     res->next = table->array[index]->head_list;
     table->array[index]->head_list = res;
 
-    if (chek_min_max(table, max_i, min_i, index))
+    if (chek_min_max(table, max_i, index))
     {
         return WRONG_POINTER;
     }
@@ -543,21 +508,21 @@ int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c,
             strncpy(value, *buf, buf_end);
             fprintf(fout, "%s%c", value, *end_c);
 
-            if ((max_i != (*table)->hashsize) && (min_i != (*table)->hashsize))
+            if ((max_i != (*table)->hashsize))
             {
-                if (check_need_rebild((*table)->array[max_i]->length, (*table)->array[min_i]->length, &fl))
+                if (check_need_rebild((*table)->array[max_i]->length, &fl))
                 {
                     return WRONG_POINTER;
                 }
             }
             if (fl == 1)
             {
-                if (mistake = rebild_hash_table(table, &max_i, &min_i))
+                if (mistake = rebild_hash_table(table, &max_i))
                 {
                     return mistake;
                 }
             }
-            if (mistake = add_elem_to_table(*table, def_name, value, &min_i, &max_i))
+            if (mistake = add_elem_to_table(*table, def_name, value, &max_i))
             {
                 free(def_name);
                 free(value);
