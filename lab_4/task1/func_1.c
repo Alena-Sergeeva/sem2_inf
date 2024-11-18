@@ -13,8 +13,8 @@ enum err
     WRONG_DEF_NAME,
     FILE_NOT_OPEN,
     INT_OVERFLOW,
-    NO_DEFINES,
-    SAME_MACROS
+    SAME_MACROS,
+    WRONG_CNT
 };
 
 typedef struct Node
@@ -475,18 +475,18 @@ int find_lecsem_in_table(char *str, int str_end, Hash_table *table, char **value
     return OK;
 }
 
-int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c, Hash_table **table)
+int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c, char *def_fl, Hash_table **table)
 {
     enum err mistake = OK;
     int buf_end = 0;
-    char fl = 0;
     char *temp_value = NULL;
     char *begin_value = NULL;
     char c = ' ';
-    if ((fin == NULL) || (fout == NULL) || (buf == NULL) || (capacity == NULL) || (table == NULL) || (*table == NULL) || (end_c == NULL))
+    if ((fin == NULL) || (fout == NULL) || (!def_fl) || (buf == NULL) || (capacity == NULL) || (table == NULL) || (*table == NULL) || (end_c == NULL))
     {
         return WRONG_POINTER;
     }
+    *def_fl = 0;
     while (!feof(fin))
     {
         if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_wathespace))
@@ -498,7 +498,6 @@ int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c,
             return OK;
         }
         fprintf(fout, "#define ");
-
         if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_for_value))
         {
             return mistake;
@@ -514,28 +513,23 @@ int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c,
         {
             return OK;
         }
-        if (mistake = find_lecsem_in_table(*buf, begin_value - *buf, *table, &temp_value))
+        if (mistake = find_lecsem_in_table(*buf, begin_value - *buf + 1, *table, &temp_value))
         {
             return mistake;
         }
         fprintf(fout, "%s %s\n", *buf, begin_value);
         if (temp_value == NULL)
         {
-            if (mistake = add_elem_to_table(*table, *buf, begin_value - *buf, begin_value, strlen(begin_value)))
+            if (mistake = add_elem_to_table(*table, *buf, (begin_value - *buf + 1), begin_value, (strlen(begin_value) + 1)))
             {
                 return mistake;
             }
-            fl = 1;
+            *def_fl = 1;
         }
         else
         {
             return SAME_MACROS;
         }
-    }
-    if (fl == 0)
-    {
-        printf("KKK");
-        return NO_DEFINES;
     }
     return OK;
 }
@@ -555,14 +549,17 @@ int read_file(char *file_in, char *file_out)
     char *buf = NULL, *value = NULL;
     int capacity = 20, buf_end = 0;
     enum err mistake = OK;
-    char end_c = ' ', fl = 0;
+    char end_c = ' ', fl = 0, def_fl = 0;
     int i = 0;
     Hash_table *table = NULL;
 
-    if ((!(fin = fopen(file_in, "r"))) || (!(fout = fopen(file_out, "w"))))
+    if (!(fin = fopen(file_in, "r")))
+    {
+        return FILE_NOT_OPEN;
+    }
+    if (!(fout = fopen(file_out, "w")))
     {
         fclose(fin);
-        fclose(fout); // NULL?
         return FILE_NOT_OPEN;
     }
     if (!(buf = (char *)malloc(sizeof(char) * capacity)))
@@ -578,17 +575,15 @@ int read_file(char *file_in, char *file_out)
         free(buf);
         return mistake;
     }
-    if (mistake = read_diretive(fin, fout, &buf, &capacity, &end_c, &table))
+    if (mistake = read_diretive(fin, fout, &buf, &capacity, &end_c, &def_fl, &table))
     {
         close_free(fin, fout, buf, &table);
-        if (mistake == NO_DEFINES)
-        {
-            return OK;
-        }
         return mistake;
     }
-
-    print_hash_table(table);
+    if (def_fl != 0)
+    {
+        print_hash_table(table);
+    }
 
     if (check_need_rebild(table, &fl))
     {
@@ -684,6 +679,9 @@ void print_mistake(enum err mistake)
 {
     switch (mistake)
     {
+    case OK:
+        printf("Откройте входной файл\n");
+        break;
     case MEMMORY_ERROR:
         printf("Не удалось выделить память\n");
         break;
@@ -699,28 +697,39 @@ void print_mistake(enum err mistake)
     case FILE_NOT_OPEN:
         printf("Не удалось открыть файл\n");
         break;
-    // надо просто вернуть входной файл как было
-    case NO_DEFINES:
-        printf("Макросов не найдено, файл без изменений\n");
-        break;
     case SAME_MACROS:
         printf("Встречено два одинаковых макроса\n");
         break;
     }
 }
+
+int valid(int argc, char *argv[], char **f_out)
+{
+    if (argc != 2)
+    {
+        return WRONG_CNT;
+    }
+    if (strcmp(argv[1], "temp_f.txt") == 0)
+    {
+        *f_out = "temp_1.txt";
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     enum err mistake = 0;
-    if ((argc > 2) || (argc < 2))
+    char *temp_f = "temp_f.txt";
+    if (valid(argc, argv, &temp_f))
     {
         printf("Неверное колличество аргументов командной строки\n");
         return 0;
     }
-    if (mistake = read_file(argv[1], "temparary.txt"))
+    if (mistake = read_file(argv[1], temp_f))
     {
         print_mistake(mistake);
         return 0;
     }
-    print_mistake(copy_in_input_file(argv[1], "temparary.txt"));
+    print_mistake(copy_in_input_file(argv[1], temp_f));
     return 0;
 }
