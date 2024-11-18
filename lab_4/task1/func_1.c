@@ -65,7 +65,6 @@ int clear_list(Node **head_node)
     }
     while (*head_node != NULL)
     {
-
         free((*head_node)->def_name);
         free((*head_node)->value);
         temp_node = (*head_node)->next;
@@ -139,7 +138,6 @@ int create_node_and_full(char *def_name, int size1, char *value, int size2, unsi
     {
         return WRONG_POINTER;
     }
-
     if (!(*res = (Node *)malloc(sizeof(Node))))
     {
         return MEMMORY_ERROR;
@@ -163,9 +161,8 @@ int create_node_and_full(char *def_name, int size1, char *value, int size2, unsi
 }
 
 /*
-хеш-функции - <def_name> как число, записанное в системе счисления
-с основанием 62 (алфавит этой системы счисления состоит из символов {0, …,9, A, …,
-Z, a, …, z})
+хеш-функции - <def_name> как число, записанное в системе счисления с основанием 62
+(алфавит этой системы счисления состоит из символов {0, …,9, A, …, Z, a, …, z})
 */
 int hash_func(char *str, unsigned int *key)
 {
@@ -240,7 +237,6 @@ int rebild_hash_table(Hash_table **table)
     {
         return WRONG_POINTER;
     }
-
     while (!fl)
     {
         if (new_hashsize + 2 < __INT_MAX__)
@@ -256,7 +252,6 @@ int rebild_hash_table(Hash_table **table)
             return WRONG_POINTER;
         }
     }
-
     if (mistake = creat_and_intil_hash_table(&table_new, new_hashsize))
     {
         return mistake;
@@ -442,7 +437,6 @@ int read_lecsem(FILE *fin, FILE *fout, char **buf, int *capacity, int *buf_end, 
         *buf = NULL;
         return mistake;
     }
-
     (*buf)[*buf_end] = '\0';
     ++(*buf_end);
     *end_c = c;
@@ -484,11 +478,12 @@ int find_lecsem_in_table(char *str, int str_end, Hash_table *table, char **value
 int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c, Hash_table **table)
 {
     enum err mistake = OK;
-    int buf_end = 0, buf_value_end = 0, value_capacity = 10;
+    int buf_end = 0;
     char fl = 0;
     char *temp_value = NULL;
+    char *begin_value = NULL;
     char c = ' ';
-    if ((fin == NULL) || (fout == NULL) || (buf == NULL) || (capacity == NULL) || (table == NULL) || (*table == NULL))
+    if ((fin == NULL) || (fout == NULL) || (buf == NULL) || (capacity == NULL) || (table == NULL) || (*table == NULL) || (end_c == NULL))
     {
         return WRONG_POINTER;
     }
@@ -498,35 +493,25 @@ int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c,
         {
             return mistake;
         }
-        printf("%s\n", *buf);
         if (strcmp(*buf, "#define") != 0)
         {
-            printf("ddddd\n");
             return OK;
         }
         fprintf(fout, "#define ");
+
         if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_for_value))
         {
             return mistake;
         }
-        fl = 0;
-        char *begin_value = strchr(*buf, ' ');
+        begin_value = strchr(*buf, ' ');
         if (begin_value == NULL)
         {
-            printf("lllll");
             return OK;
         }
         *(begin_value) = '\0';
         ++begin_value;
-        // как будто это не возможно
-        if (begin_value - (*buf) > buf_end)
-        {
-            printf("ppppp");
-            return OK;
-        }
         if (strlen(begin_value) == 0)
         {
-            printf("ooooo\n");
             return OK;
         }
         if (mistake = find_lecsem_in_table(*buf, begin_value - *buf, *table, &temp_value))
@@ -536,15 +521,8 @@ int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c,
         fprintf(fout, "%s %s\n", *buf, begin_value);
         if (temp_value == NULL)
         {
-            printf("%s %s\n", *buf, begin_value);
-            for (int k = 0; k < begin_value - *buf; ++k)
-            {
-                printf("%d ", (*buf)[k]);
-            }
-            printf("\n");
             if (mistake = add_elem_to_table(*table, *buf, begin_value - *buf, begin_value, strlen(begin_value)))
             {
-                printf("mmmm\n");
                 return mistake;
             }
             fl = 1;
@@ -556,6 +534,7 @@ int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c,
     }
     if (fl == 0)
     {
+        printf("KKK");
         return NO_DEFINES;
     }
     return OK;
@@ -616,7 +595,6 @@ int read_file(char *file_in, char *file_out)
         close_free(fin, fout, buf, &table);
         return WRONG_POINTER;
     }
-
     if (fl == 1)
     {
         if (mistake = rebild_hash_table(&table))
@@ -624,9 +602,8 @@ int read_file(char *file_in, char *file_out)
             close_free(fin, fout, buf, &table);
             return mistake;
         }
+        print_hash_table(table);
     }
-    print_hash_table(table);
-
     while (!isalnum(buf[i]))
     {
         ++i;
@@ -648,7 +625,6 @@ int read_file(char *file_in, char *file_out)
     {
         fprintf(fout, "%s%c", value, end_c);
     }
-    printf("\n%s\n", buf + i);
 
     while (!feof(fin))
     {
@@ -675,7 +651,6 @@ int read_file(char *file_in, char *file_out)
             fprintf(fout, "%s%c", value, end_c);
         }
     }
-
     close_free(fin, fout, buf, &table);
     return OK;
 }
@@ -715,7 +690,6 @@ void print_mistake(enum err mistake)
     case WRONG_POINTER:
         printf("Передан нулевой указатель\n");
         break;
-    //????????????????
     case WRONG_DEF_NAME:
         printf("Макрос написан неправильно\n");
         break;
@@ -737,18 +711,16 @@ void print_mistake(enum err mistake)
 int main(int argc, char *argv[])
 {
     enum err mistake = 0;
+    if ((argc > 2) || (argc < 2))
+    {
+        printf("Неверное колличество аргументов командной строки\n");
+        return 0;
+    }
     if (mistake = read_file(argv[1], "temparary.txt"))
     {
         print_mistake(mistake);
         return 0;
     }
-    if (copy_in_input_file(argv[1], "temparary.txt"))
-    {
-        printf("Не удалось открыть файл\n");
-    }
-    else
-    {
-        printf("Откройте входной файл\n");
-    }
+    print_mistake(copy_in_input_file(argv[1], "temparary.txt"));
     return 0;
 }
