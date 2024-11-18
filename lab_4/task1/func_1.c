@@ -17,32 +17,6 @@ enum err
     SAME_MACROS
 };
 
-/*
-Реализуйте приложение для организации макрозамен в тексте. На вход приложению
-через аргументы командной строки подаётся путь к текстовому файлу, содержащему в
-начале набор директив #define, а далее обычный текст. Синтаксис директивы
-соответствует стандарту языка C:
-#define <def_name> <value>
-Аргументов у директивы нет, директива не может быть встроена в другую директиву.
-Ваше приложение должно обработать содержимое текстового файла, выполнив замены
-последовательностей символов <def_name> на <value>. Количество директив
-произвольно, некорректных директив нет, объём текста во входном файле произволен.
-В имени <def_name> допускается использование символов латинского алфавита
-(прописные и строчные буквы не отождествляются) и символов арабских цифр;
-значение <value> произвольно и завершается символом переноса строки или символом
-конца файла. Для хранения имен макросов и макроподстановок используйте
-хеш-таблицу размера HASHSIZE (начальное значение равно 128). Для вычисления
-. Хеш-значение для <def_name> в рамках хеш-таблицы вычисляйте как
-остаток от деления эквивалентного для <def_name> числа в системе счисления с
-основанием 10 на значение HASHSIZE. Для разрешения коллизий используйте метод
-цепочек. В ситуациях, когда после модификации таблицы длины самой короткой и
-самой длинной цепочек в хеш-таблице различаются в 2 раза и более, пересобирайте
-хеш-таблицу с испо льзованием другого значения HASHSIZE (логику модификации
-значения HASHSIZE продумайте самостоятельно) до достижения примерно
-равномерного распределения объектов структур по таблице. Оптимизируйте расчёт
-хэш-значений при пересборке таблицы при помощи кэширования.
-*/
-
 typedef struct Node
 {
     char *def_name;
@@ -57,7 +31,6 @@ typedef struct Hash_table
     Node **array;
 } Hash_table;
 
-// создаем таблицу, иницилизируем ее массив нулами
 int creat_and_intil_hash_table(Hash_table **table, unsigned int size)
 {
     int i = 0;
@@ -128,7 +101,6 @@ int clear_hach_table(Hash_table **table)
                 return mistake;
             }
         }
-        //????????как будто что-то не освободила
     }
     free((*table)->array);
     free(*table);
@@ -160,7 +132,7 @@ int print_hash_table(Hash_table *table)
     }
     return OK;
 }
-// Cоздаем ноду списка
+
 int create_node_and_full(char *def_name, int size1, char *value, int size2, unsigned int hash_func_value, Node **res)
 {
     if ((res == NULL) || (def_name == NULL) || (value == NULL))
@@ -183,20 +155,6 @@ int create_node_and_full(char *def_name, int size1, char *value, int size2, unsi
         free(res);
         return MEMMORY_ERROR;
     }
-    /*
-    printf("%d %s\n", size1, def_name);
-    for (int k = 0; k < size1; ++k)
-    {
-        printf("%d ", def_name[k]);
-    }
-    printf("\n");
-    printf("%d %s\n", size2, value);
-    for (int k = 0; k < size2; ++k)
-    {
-        printf("%d ", value[k]);
-    }
-    printf("\n");
-    */
     strncpy((*res)->def_name, def_name, size1);
     strncpy((*res)->value, value, size2);
     (*res)->hash_func_value = hash_func_value;
@@ -396,7 +354,7 @@ int add_elem_to_table(Hash_table *table, char *def_name, int size1, char *value,
     {
         return mistake;
     }
-    printf("def_name - %s value - %s hash_size - %d\n", def_name, value, key);
+    // printf("def_name - %s value - %s hash_size - %d\n", def_name, value, key);
     index = key % table->hashsize;
     if (mistake = create_node_and_full(def_name, size1, value, size2, key, &res))
     {
@@ -526,68 +484,76 @@ int find_lecsem_in_table(char *str, int str_end, Hash_table *table, char **value
 int read_diretive(FILE *fin, FILE *fout, char **buf, int *capacity, char *end_c, Hash_table **table)
 {
     enum err mistake = OK;
-    char *def_name = NULL;
     int buf_end = 0, buf_value_end = 0, value_capacity = 10;
     char fl = 0;
-    char *buf_value = NULL;
     char *temp_value = NULL;
-    if ((fin == NULL) || (fout == NULL) || (buf == NULL) || (capacity == NULL) || (table == NULL) || (*table == NULL) || (end_c == NULL))
+    char c = ' ';
+    if ((fin == NULL) || (fout == NULL) || (buf == NULL) || (capacity == NULL) || (table == NULL) || (*table == NULL))
     {
         return WRONG_POINTER;
     }
-    if (!(buf_value = (char *)malloc(sizeof(char) * value_capacity)))
-    {
-        return MEMMORY_ERROR;
-    }
     while (!feof(fin))
     {
-        if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_isspace))
+        if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_wathespace))
         {
-            free(buf_value);
             return mistake;
         }
-        if (strncmp(*buf, "#define", buf_end) == 0)
+        printf("%s\n", *buf);
+        if (strcmp(*buf, "#define") != 0)
         {
-            fprintf(fout, "%s%c", *buf, *end_c);
-            if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_wathespace))
+            printf("ddddd\n");
+            return OK;
+        }
+        fprintf(fout, "#define ");
+        if (mistake = read_lecsem(fin, fout, buf, capacity, &buf_end, end_c, split_func_for_value))
+        {
+            return mistake;
+        }
+        fl = 0;
+        char *begin_value = strchr(*buf, ' ');
+        if (begin_value == NULL)
+        {
+            printf("lllll");
+            return OK;
+        }
+        *(begin_value) = '\0';
+        ++begin_value;
+        // как будто это не возможно
+        if (begin_value - (*buf) > buf_end)
+        {
+            printf("ppppp");
+            return OK;
+        }
+        if (strlen(begin_value) == 0)
+        {
+            printf("ooooo\n");
+            return OK;
+        }
+        if (mistake = find_lecsem_in_table(*buf, begin_value - *buf, *table, &temp_value))
+        {
+            return mistake;
+        }
+        fprintf(fout, "%s %s\n", *buf, begin_value);
+        if (temp_value == NULL)
+        {
+            printf("%s %s\n", *buf, begin_value);
+            for (int k = 0; k < begin_value - *buf; ++k)
             {
-                free(buf_value);
+                printf("%d ", (*buf)[k]);
+            }
+            printf("\n");
+            if (mistake = add_elem_to_table(*table, *buf, begin_value - *buf, begin_value, strlen(begin_value)))
+            {
+                printf("mmmm\n");
                 return mistake;
             }
-            fprintf(fout, "%s%c", *buf, *end_c);
-
-            if (mistake = read_lecsem(fin, fout, &buf_value, &value_capacity, &buf_value_end, end_c, split_func_for_value))
-            {
-                free(buf_value);
-                return mistake;
-            }
-            fprintf(fout, "%s%c", buf_value, *end_c);
-            if (mistake = find_lecsem_in_table(*buf, buf_end, *table, &temp_value))
-            {
-                free(buf_value);
-                return mistake;
-            }
-            if (temp_value == NULL)
-            {
-                if (mistake = add_elem_to_table(*table, *buf, buf_end, buf_value, buf_value_end))
-                {
-                    free(buf_value);
-                    return mistake;
-                }
-                fl = 1;
-            }
-            else
-            {
-                free(buf_value);
-                return SAME_MACROS;
-            }
+            fl = 1;
         }
         else
         {
-            break;
+            return SAME_MACROS;
         }
     }
-    free(buf_value);
     if (fl == 0)
     {
         return NO_DEFINES;
@@ -611,6 +577,7 @@ int read_file(char *file_in, char *file_out)
     int capacity = 20, buf_end = 0;
     enum err mistake = OK;
     char end_c = ' ', fl = 0;
+    int i = 0;
     Hash_table *table = NULL;
 
     if ((!(fin = fopen(file_in, "r"))) || (!(fout = fopen(file_out, "w"))))
@@ -632,7 +599,6 @@ int read_file(char *file_in, char *file_out)
         free(buf);
         return mistake;
     }
-
     if (mistake = read_diretive(fin, fout, &buf, &capacity, &end_c, &table))
     {
         close_free(fin, fout, buf, &table);
@@ -661,8 +627,36 @@ int read_file(char *file_in, char *file_out)
     }
     print_hash_table(table);
 
+    while (!isalnum(buf[i]))
+    {
+        ++i;
+    }
+    if (mistake = find_lecsem_in_table(buf + i, buf_end, table, &value))
+    {
+        close_free(fin, fout, buf, &table);
+        return mistake;
+    }
+    if (value == NULL)
+    {
+        value = buf;
+    }
+    if (end_c == EOF)
+    {
+        fprintf(fout, "%s", value);
+    }
+    else
+    {
+        fprintf(fout, "%s%c", value, end_c);
+    }
+    printf("\n%s\n", buf + i);
+
     while (!feof(fin))
     {
+        if (mistake = read_lecsem(fin, fout, &buf, &capacity, &buf_end, &end_c, split_func_issymbol))
+        {
+            close_free(fin, fout, buf, &table);
+            return mistake;
+        }
         if (mistake = find_lecsem_in_table(buf, buf_end, table, &value))
         {
             close_free(fin, fout, buf, &table);
@@ -672,24 +666,16 @@ int read_file(char *file_in, char *file_out)
         {
             value = buf;
         }
-        fprintf(fout, "%s%c", value, end_c);
-
-        if (mistake = read_lecsem(fin, fout, &buf, &capacity, &buf_end, &end_c, split_func_issymbol))
+        if (end_c == EOF)
         {
-            close_free(fin, fout, buf, &table);
-            return mistake;
+            fprintf(fout, "%s", value);
+        }
+        else
+        {
+            fprintf(fout, "%s%c", value, end_c);
         }
     }
-    if (mistake = find_lecsem_in_table(buf, buf_end, table, &value))
-    {
-        close_free(fin, fout, buf, &table);
-        return mistake;
-    }
-    if (value == NULL)
-    {
-        value = buf;
-    }
-    fprintf(fout, "%s", value);
+
     close_free(fin, fout, buf, &table);
     return OK;
 }
