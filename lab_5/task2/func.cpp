@@ -1,127 +1,111 @@
+#include <fstream>
 #include <iostream>
 #include <vector>
-#include <fstream>
-/*
-encoder. В классе определить и реализовать:
-● Конструктор, принимающий ключ шифрования (массив байтов типа std::vector<std::byte>)
-● Метод encode, который принимает путь ко входному файлу (типа std::string), выходному файлу
-(типа std::string) и флаг, отвечающий за то, выполнять шифрование или дешифрование (типа bool) и
-выполняет процесс шифрования/дешифрования файла
-● mutator для значения ключа Метод, который используется для изменения значения переменной экземпляра.
-*/
-#define N 128
+#include <cstddef>
+
+#define N 256
 
 class encoder
 {
-    std::vector<std::byte> _S;
-    int x;
-    int y;
-    // void _init(std::vector <std::byte> key)
-
-    void swap(int &i, int &j)
+    std::vector<std::byte> _key;
+    static void swap(std::vector<std::byte> &S, const unsigned int &i, const unsigned int &j)
     {
-        std::byte temp = _S[i];
-        _S[i] = _S[j];
-        _S[j] = temp;
+        std::byte temp = S[i];
+        S[i] = S[j];
+        S[j] = temp;
     }
-    void _init(std::vector<std::byte> key)
+    void _init(std::vector<std::byte> &S) const
     {
-        int key_length = key.size();
-        for (int i = 0; i < N; ++i)
+        // добавить проверку на вектор нулевой длины
+        int key_length = _key.size();
+        if (key_length == 0)
         {
-            _S.push_back((std::byte)(i));
+            throw std::runtime_error("Длина ключа должна быть больше 0\n");
         }
-        int j = 0;
+        for (unsigned int i = 0; i <= N; ++i)
+        {
+            S.push_back(static_cast<std::byte>(i));
+        }
+        unsigned int j = 0;
         std::byte temp;
-        for (int i = 0; i < N; ++i)
+        for (unsigned int i = 0; i < N; ++i)
         {
-            j = (j + (unsigned char)_S[i] + (unsigned char)key[i % key_length]) % N;
-            this->swap(i, j);
-        }
-        for (int i = 0; i < N; ++i)
-        {
-            std::cout << (char)_S[i] << ' ';
+            j = (j + static_cast<unsigned int>(S[i]) + static_cast<unsigned int>(_key[i % key_length])) % N;
+            swap(S, i, j);
         }
     }
-    std::byte pseudo_random_generation_algorithm(char c)
+    std::byte pseudo_random_generation_algorithm(std::vector<std::byte> &S) const
     {
+        unsigned int x = 0, y = 0;
         x = (x + 1) % N;
-        y = (y + (unsigned char)_S[x]) % N;
-        this->swap(x, y);
-        return _S[((unsigned char)(_S[x]) + (unsigned char)_S[y]) % N];
+        y = (y + static_cast<unsigned int>(S[x])) % N;
+        swap(S, x, y);
+        unsigned int t = (static_cast<unsigned int>(S[x]) + static_cast<unsigned int>(S[y])) % N;
+        return S[t];
     }
 
 public:
     // Конструктор, принимающий ключ шифрования (массив байтов типа std::vector<std::byte>)
     encoder(std::vector<std::byte> key)
     {
-        x = 0;
-        y = 0;
-        this->_init(key);
+        _key = key;
     }
+    ~encoder() = default;
     void encode(std::string file_in, std::string file_out, bool need_deciph)
     {
         // кинуть исключение
-        std::ifstream f_in(file_in);
+        std::ifstream f_in(file_in, std::ios_base::binary | std::ios_base::in);
         if (!f_in.is_open())
         {
-            throw "Не удалось открыть файл для чтения\n";
+            throw std::runtime_error("Не удалось открыть файл для чтения\n");
         }
-        std::ofstream f_out(file_out);
-        if (!f_in.is_open())
+        std::ofstream f_out(file_out, std::ios_base::binary | std::ios_base::out);
+        /* Файл сосздается лишняя провека
+        if (!f_out.is_open())
         {
-            f_in.close();
-            throw "Не удалось открыть файл для записи\n";
+            // f_in.close();
+            throw std::runtime_error("Не удалось открыть файл для записи\n");
         }
-        char c = ' ';
-        // if (need_deciph == 0)
-        //{
-        while (f_in.get(c))
+        */
+        std::vector<std::byte> S;
+        this->_init(S);
+        unsigned char c;
+        while ((c = f_in.get()) && (!f_in.eof()))
         {
-            f_out.put(c ^ (char)pseudo_random_generation_algorithm(c));
+            std::cout << (unsigned char)c << ' ';
+            c = static_cast<unsigned char>(static_cast<std::byte>(c) ^ this->pseudo_random_generation_algorithm(S));
+            f_out.put(c);
         }
-        //}
-        /*   else
-           {
-               while (f_in.get(c))
-               {
-                   f_out.put(c ^ (char)pseudo_random_generation_algorithm(c));
-               }
-           }
-   */
+
         f_out.close();
         f_in.close();
     }
-    void mutator(std::vector<std::byte> key)
+
+    void mutator(const std::vector<std::byte> &key)
     {
-        this->_init(key);
+        if (key.size() == 0)
+        {
+            throw std::runtime_error("Длина ключа должна быть больше 0\n");
+        }
+        _key = key;
     }
 };
 
 int main()
 {
-    // std::vector<std::byte> a = {31, 101, 112, 101};
-    std::vector<std::byte> a;
-    a.push_back((std::byte)31);
-    a.push_back((std::byte)37);
-    a.push_back((std::byte)82);
-    a.push_back((std::byte)66);
+    std::vector<std::byte> a = {std::byte(31), std::byte(101), std::byte(112), std::byte(101)};
+    std::vector<std::byte> b = {};
     encoder first(a);
+    encoder second(b);
     try
     {
-        first.encode("text1.txt", "text2.txt", 0);
+        first.encode("text2.bin", "text12.bin", 0);
+        // second.encode("text2.bin", "text3.bin", 0);
+        first.encode("text3.bin", "text4.bin", 0);
     }
-    catch (const char *err)
+    catch (const std::runtime_error &e)
     {
-        std::cout << err;
-    }
-    try
-    {
-        first.encode("text2.txt", "text1.txt", 1);
-    }
-    catch (const char *err)
-    {
-        std::cout << err;
+        std::cout << e.what();
     }
 
     return 0;
