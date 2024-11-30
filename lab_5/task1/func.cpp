@@ -56,10 +56,11 @@ public:
     {
         return (*this) += 1;
     }
-    binary_int operator++(int) const
+    binary_int operator++(int)
     {
         binary_int new_num(*this);
-        return ++new_num;
+        (*this) += 1;
+        return new_num;
     }
 
     binary_int &operator-()
@@ -88,10 +89,11 @@ public:
         return (*this) -= 1;
     }
 
-    binary_int operator--(int) const
+    binary_int operator--(int)
     {
-        binary_int num(1);
-        return *this - 1;
+        binary_int num(*this);
+        (*this) -= 1;
+        return num;
     }
 
     binary_int &operator*=(const binary_int &num1)
@@ -175,6 +177,7 @@ int main()
     std::cout << "--num3 " << (num3) << '\n';
 
     std::cout << "num3-- " << (num3--) << '\n';
+    std::cout << "num3 " << (num3) << '\n';
     std::cout << "num3 " << (num3) << '\n';
     num3 = 1212;
     std::cout << "num3 " << num3 << '\n';
