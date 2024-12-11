@@ -109,6 +109,35 @@ int convex_polygon(char *fl, int cnt, ...)
 }
 
 /*
+Реализуйте функцию с переменным числом аргументов, находяющую значение
+многочлена степени n в заданной точке. Входными параметрами являются точка
+(вещественного типа), в которой определяется значение многочлена, степень
+многочлена (целочисленного типа), и его коэффициенты (вещественного типа, от
+старшей степени до свободного коэффициента в порядке передачи параметров
+функции слева направо).
+*/
+int count_y(double *res, double x, int n, ...)
+{
+    va_list iterator;
+    int i = 0;
+    if (res == NULL)
+    {
+        return WRONG_POINTER;
+    }
+    *res = 0.0;
+    va_start(iterator, n);
+    for (i = 0; i <= n - 1; ++i)
+    {
+        *res = (*res + va_arg(iterator, double)) * x;
+        printf("%lf ", *res);
+    }
+    *res += va_arg(iterator, double);
+    va_end(iterator);
+    printf("%lf\n", *res);
+    return 0;
+}
+
+/*
 Реализуйте функцию с переменным числом аргументов, находящую среди
 переданных строковых представлений целых неотрицательных чисел, заданных в
 системе счисления с основанием base, передаваемым как параметр функции, чисел,
@@ -226,7 +255,8 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
     for (i = 0; i < cnt; ++i)
     {
         length = 1;
-        str = va_arg(iterator, char *);
+        // str = va_arg(iterator, char *);
+        upper(&str, va_arg(iterator, char *));
         if (mistake = to_int_10(str, base, &num))
         {
             res[i] = mistake;
@@ -302,14 +332,15 @@ int main()
     char fl = '0';
     enum err *res = NULL;
     int cnt = 0;
-    // квадрат
+    // я обхожу точки по кругу , то есть звездочку задать не получитя-- нет не по кругу
+    //  а в указанном порядке
+    //  квадрат
     printf("%d\n", convex_polygon(&fl, 4, 0., 0., 1., 0., 1., 1., 0., 1.));
     printf("result - %d\n", fl);
     // ступенька
     printf("%d\n", convex_polygon(&fl, 6, 1., 0., 3., 0., 3., 1., 2.0, 1.0, 2., 3., 1.0, 3.));
     printf("result - %d\n", fl);
-
-    // подумать что делать с прямой линией
+    // подумать что делать с прямой линией, параллельными прямыми(как бужто их не возможно задать), точкой
     printf("%d\n", convex_polygon(&fl, 3, 0., 0., 1., 1., 2., 2.));
     printf("result - %d\n", fl);
 
@@ -342,5 +373,8 @@ int main()
     free(res);
     res = NULL;
 
+    double c_y = 0.0;
+    count_y(&c_y, 2.0, 2, 2.0, 3.0, 4.0);
+    printf("%lf\n", c_y);
     return 0;
 }
