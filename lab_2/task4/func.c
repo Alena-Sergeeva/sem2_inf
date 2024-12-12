@@ -147,6 +147,7 @@ int count_y(double *res, double x, int n, ...)
 int to_int_10(char *str, int base, long int *num)
 {
     long int res = 0;
+    long int num_1 = 0;
     if ((str == NULL) || (num == NULL))
     {
         return WRONG_POINTER;
@@ -157,13 +158,15 @@ int to_int_10(char *str, int base, long int *num)
     }
     while (*str != '\0')
     {
-        if (!isalnum(*str) || toupper(*str) - 'A' >= base)
+        num_1 = isalpha(*str) ? (toupper(*str) - 'A' + 10) : (*str - '0');
+        if (!isalnum(*str) || (num_1 >= base))
         {
             return WRONG_STR;
         }
-        res = res * base + (isalpha(*str) ? (toupper(*str) - 'A' + 10) : (*str - '0'));
+        res = res * base + num_1;
         if (res < 0)
         {
+            printf("mmmm\n");
             return OVERFLOW;
         }
         ++str;
@@ -172,27 +175,29 @@ int to_int_10(char *str, int base, long int *num)
     return OK;
 }
 
-void to_base(long int num, int base_to, char *str, char **str_begin)
+int to_base(long int num, int base_to, char **str_begin)
 {
+    if ((str_begin == NULL) || (*str_begin == NULL))
+    {
+        return WRONG_POINTER;
+    }
     int y;
-    *str_begin = str + (sizeof(long int) << 3);
     **str_begin = '\0';
     while (num > 0)
     {
         --*str_begin;
         y = num % base_to;
-        **str_begin = ((y > 9) ? ('a' + y - 10) : ('0' + y));
+        **str_begin = ((y > 9) ? (y - 10 + 'A') : ('0' + y));
         num /= base_to;
     }
-
-    return;
+    return 0;
 }
 
 int sum_num_b(char **sum_s1_s2, char *str1, int length1, char *str2, int length2, int base)
 {
     int i = 0, num1 = 0, num2 = 0, num = 0, ost = 0;
     enum err mistake = 0;
-    if (sum_s1_s2 == NULL)
+    if ((sum_s1_s2 == NULL) || (*sum_s1_s2 == NULL) || (str1 == NULL) || (str2 == NULL))
     {
         return WRONG_POINTER;
     }
@@ -229,8 +234,31 @@ int sum_num_b(char **sum_s1_s2, char *str1, int length1, char *str2, int length2
     {
         ++*sum_s1_s2;
     };
-    printf("res: %s\n", *sum_s1_s2);
+    // printf("res: %s\n", *sum_s1_s2);
     return OK;
+}
+
+int equal(char *str1, char *str2, char *fl)
+{
+    if ((str1 == NULL) || (str2 == NULL) || (fl == NULL))
+    {
+        return WRONG_POINTER;
+    }
+    *fl = 0;
+    while ((*str1 != '\0') && (*str2 != '\0'))
+    {
+        if (toupper(*str1) != *str2)
+        {
+            return 0;
+        }
+        ++str1;
+        ++str2;
+    }
+    if ((*str1 == '\0') && (*str2 == '\0'))
+    {
+        *fl = 1;
+    }
+    return 0;
 }
 
 int Kaprekars_num(enum err *res, int base, int cnt, ...)
@@ -242,6 +270,11 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
     va_list iterator;
     char str_base[sizeof(long int) << 3 + 1];
     char *str_begin = str_base + (sizeof(long int) << 3);
+    char fl;
+
+    char sum_s1_s2[sizeof(long int) << 3 + 1];
+    char *sum_ptr = sum_s1_s2 + (sizeof(long int) << 3);
+    *sum_ptr = '\0';
 
     if (cnt < 0)
     {
@@ -255,37 +288,49 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
     for (i = 0; i < cnt; ++i)
     {
         length = 1;
-        // str = va_arg(iterator, char *);
-        upper(&str, va_arg(iterator, char *));
+        str = va_arg(iterator, char *);
         if (mistake = to_int_10(str, base, &num))
         {
+            printf("aaaa\n");
             res[i] = mistake;
+            continue;
         }
-        if (num * num == __INT64_MAX__)
+        if (num > __INT64_MAX__ / num)
         {
             res[i] = OVERFLOW;
+            printf("mmmm\n");
+            continue;
         }
         qrt = num * num;
-        to_base(qrt, base, str_base, &str_begin);
+        if (mistake = to_base(qrt, base, &str_begin))
+        {
+            printf("jjj\n");
+            res[i] = mistake;
+            continue;
+        }
+
+        if (num == 1)
+        {
+            res[i] = YES;
+            continue;
+        }
 
         printf("qrt : %ld; num : %ld; %s\n", qrt, num, str_begin);
 
         int len_str_base = strlen(str_begin);
 
-        char sum_s1_s2[sizeof(long int) << 3 + 1];
-        char *sum_ptr = sum_s1_s2 + (sizeof(long int) << 3);
-        *sum_ptr = '\0';
-        if (qrt == num)
-        {
-            res[i] = YES;
-            continue;
-        }
         while (len_str_base != length)
         {
             sum_ptr = sum_s1_s2 + (sizeof(long int) << 3) - 1;
-            sum_num_b(&sum_ptr, str_begin, length, str_begin + length, len_str_base - length, base);
-            printf("string %s\n", sum_ptr);
-            if (strcmp(str, sum_ptr) == 0)
+            mistake = sum_num_b(&sum_ptr, str_begin, length, str_begin + length, len_str_base - length, base);
+            if ((mistake != 0) || ((equal(str, sum_ptr, &fl) != 0)))
+            {
+                printf("nnn\n");
+                res[i] = mistake;
+                continue;
+            }
+            // printf("string %s\n", sum_ptr);
+            if (fl)
             {
                 res[i] = YES;
                 break;
@@ -362,13 +407,13 @@ int main()
     free(res);
     res = NULL;
 
-    cnt = 5;
+    cnt = 7;
     if (!(res = (enum err *)malloc(sizeof(enum err) * cnt)))
     {
         printf("Не удалось выделить память\n");
     }
     // сделать чтобы маленькие буквы становились большими
-    Kaprekars_num(res, 16, cnt, "1", "6", "A", "f", "33");
+    Kaprekars_num(res, 10, cnt, "1", "999", "2223", "2728", "A", "922337203685477580", "33");
     print_res(res, cnt);
     free(res);
     res = NULL;
