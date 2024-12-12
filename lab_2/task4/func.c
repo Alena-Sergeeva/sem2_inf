@@ -5,15 +5,6 @@
 #include <string.h>
 #include <math.h>
 
-/*
-2. Реализуйте функцию с переменным числом аргументов, находяющую значение
-многочлена степени n в заданной точке. Входными параметрами являются точка
-(вещественного типа), в которой определяется значение многочлена, степень
-многочлена (целочисленного типа), и его коэффициенты (вещественного типа, от
-старшей степени до свободного коэффициента в порядке передачи параметров
-функции слева направо).
-
-*/
 #define EPS 1e-6
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -127,14 +118,11 @@ int count_y(double *res, double x, int n, ...)
     }
     *res = 0.0;
     va_start(iterator, n);
-    for (i = 0; i <= n - 1; ++i)
+    for (i = 0; i <= n; ++i)
     {
-        *res = (*res + va_arg(iterator, double)) * x;
-        printf("%lf ", *res);
+        *res = *res * x + va_arg(iterator, double);
     }
-    *res += va_arg(iterator, double);
     va_end(iterator);
-    printf("%lf\n", *res);
     return 0;
 }
 
@@ -167,7 +155,6 @@ int to_int_10(char *str, int base, long int *num)
         res = res * base + num_1;
         if (res < 0)
         {
-            printf("mmmm\n");
             return OVERFLOW;
         }
         ++str;
@@ -215,7 +202,6 @@ int sum_num_b(char **sum_s1_s2, char *str1, int length1, char *str2, int length2
         {
             num2 = isalpha(str2[length2 - i]) ? toupper(str2[length2 - i]) + 10 - 'A' : str2[length2 - i] - '0';
         }
-        // printf("%d str1[i] %c; %d str2[j] %c\n", num1, str1[i], num2, str2[i]);
         num = (ost + num1 + num2) % base;
         ost = (ost + num1 + num2) / base;
 
@@ -230,12 +216,11 @@ int sum_num_b(char **sum_s1_s2, char *str1, int length1, char *str2, int length2
     {
         (*sum_s1_s2)++;
     }
-    // a xnj ,eltn tckb "0" ?????
+
     while (**sum_s1_s2 == '0')
     {
         ++*sum_s1_s2;
-    };
-    // printf("res: %s\n", *sum_s1_s2);
+    }
     return OK;
 }
 
@@ -292,31 +277,26 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
         str = va_arg(iterator, char *);
         if (mistake = to_int_10(str, base, &num))
         {
-            printf("aaaa\n");
             res[i] = mistake;
             continue;
         }
-        if (num > __INT64_MAX__ / num)
-        {
-            res[i] = OVERFLOW;
-            printf("mmmm\n");
-            continue;
-        }
-        qrt = num * num;
-        if (mistake = to_base(qrt, base, &str_begin))
-        {
-            printf("jjj\n");
-            res[i] = mistake;
-            continue;
-        }
-
         if (num == 1)
         {
             res[i] = YES;
             continue;
         }
 
-        printf("qrt : %ld; num : %ld; %s\n", qrt, num, str_begin);
+        if (num > __INT64_MAX__ / num)
+        {
+            res[i] = OVERFLOW;
+            continue;
+        }
+        qrt = num * num;
+        if (mistake = to_base(qrt, base, &str_begin))
+        {
+            res[i] = mistake;
+            continue;
+        }
 
         int len_str_base = strlen(str_begin);
 
@@ -326,11 +306,9 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
             mistake = sum_num_b(&sum_ptr, str_begin, length, str_begin + length, len_str_base - length, base);
             if ((mistake != 0) || ((equal(str, sum_ptr, &fl) != 0)))
             {
-                printf("nnn\n");
                 res[i] = mistake;
                 continue;
             }
-            // printf("string %s\n", sum_ptr);
             if (fl)
             {
                 res[i] = YES;
