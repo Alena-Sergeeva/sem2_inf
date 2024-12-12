@@ -46,8 +46,8 @@ typedef struct point
 int convex_polygon(char *fl, int cnt, ...)
 {
     va_list iter;
-    int i = 0, j = 0;
-    double k = 0.0;
+    int i = 0, j = 0, line = 0;
+    double k = 0.0, k_prev = 0.0;
     int cnt_low_nul = 0;
     if (cnt < 0)
     {
@@ -68,6 +68,11 @@ int convex_polygon(char *fl, int cnt, ...)
     va_end(iter);
     for (i = 1; i < cnt - 1; ++i)
     {
+        if (k != k_prev)
+        {
+            line = 1;
+        }
+        k_prev = k;
         if (fabs(arr[i - 1].x - arr[i].x) <= EPS)
         {
             k = 0.0;
@@ -77,30 +82,26 @@ int convex_polygon(char *fl, int cnt, ...)
             k = (arr[i].y - arr[i - 1].y) / (arr[i - 1].x - arr[i].x);
         }
         cnt_low_nul = 0;
-        printf("%d; k = %lf; %lf %lf %lf\n", i, k, fabs(arr[i - 1].x - arr[i].x), arr[i - 1].x, arr[i].x);
+        // printf("%d; k = %lf; %lf %lf %lf\n", i, k, fabs(arr[i - 1].x - arr[i].x), arr[i - 1].x, arr[i].x);
         j = i + 1;
         while (j != i - 1)
         {
-            /*
-            if ((fabs(arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y) <= EPS))
-            {
-                *fl = 0;
-                return OK;
-            }
-            */
-            // точка лежит на продолжении грани многоугольника, значит он тосно не выпуклый
             printf("j: %d ; %lf\n", j, (arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y));
             if (((arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y) < 0) || ((fabs(arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y) <= EPS)))
             {
-
                 ++cnt_low_nul;
             }
             j = (j + 1) % cnt;
         }
-        printf(" %d\n", cnt_low_nul);
+        // printf(" %d\n", cnt_low_nul);
         if (cnt_low_nul % (cnt - 2) != 0)
         {
-            printf(" %d kkk\n", cnt_low_nul);
+            // printf(" %d kkk\n", cnt_low_nul);
+            *fl = 0;
+            return OK;
+        }
+        if (line == 0)
+        {
             *fl = 0;
             return OK;
         }
@@ -346,30 +347,40 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
     return OK;
 }
 
-void print_res(enum err *res, int cnt)
+void print_res(enum err res)
+{
+    switch (res)
+    {
+    case OK:
+        printf("result : ");
+        break;
+    case NO:
+        printf("NO\n");
+        break;
+    case YES:
+        printf("YES\n");
+        break;
+    case WRONG_STR:
+        printf("Строка не удовлетворяет условию\n");
+        break;
+    case EMPTY_STR:
+        printf("Строка не удовлетворяет условию\n");
+        break;
+    case OVERFLOW:
+        printf("Переполнени long int\n");
+        break;
+    case WRONG_ARG_CNT:
+        printf("Число неявных параметров функции должно быть положительным\n");
+        break;
+    }
+}
+
+void print_Kapric_res(enum err *res, int cnt)
 {
     for (int i = 0; i < cnt; ++i)
     {
-        switch (res[i])
-        {
-        case NO:
-            printf("NO ");
-            break;
-        case YES:
-            printf("YES ");
-            break;
-        case WRONG_STR:
-            printf("Строка не удовлетворяет условию ");
-            break;
-        case EMPTY_STR:
-            printf("Строка не удовлетворяет условию ");
-            break;
-        case OVERFLOW:
-            printf("Переполнени long int ");
-            break;
-        }
+        print_res(res[i]);
     }
-    printf("\n");
 }
 
 int main()
@@ -379,23 +390,24 @@ int main()
     int cnt = 0;
     // я обхожу точки по кругу , то есть звездочку задать не получитя-- нет не по кругу
     //  а в указанном порядке
+
     //  квадрат
-    printf("%d\n", convex_polygon(&fl, 4, 0., 0., 1., 0., 1., 1., 0., 1.));
-    printf("result - %d\n", fl);
+    print_res(convex_polygon(&fl, 4, 0., 0., 1., 0., 1., 1., 0., 1.));
+    printf("%d\n", fl);
     // ступенька
-    printf("%d\n", convex_polygon(&fl, 6, 1., 0., 3., 0., 3., 1., 2.0, 1.0, 2., 3., 1.0, 3.));
-    printf("result - %d\n", fl);
-    // подумать что делать с прямой линией, параллельными прямыми(как бужто их не возможно задать), точкой
-    printf("%d\n", convex_polygon(&fl, 3, 0., 0., 1., 1., 2., 2.));
-    printf("result - %d\n", fl);
+    print_res(convex_polygon(&fl, 6, 1., 0., 3., 0., 3., 1., 2.0, 1.0, 2., 3., 1.0, 3.));
+    printf("%d\n", fl);
+    // линия
+    print_res(convex_polygon(&fl, 3, 0., 0., 1., 1., 2., 2.));
+    printf("%d\n", fl);
 
     // треугольник
-    printf("%d\n", convex_polygon(&fl, 3, 0., 1., 7., 1., 5., 4.));
-    printf("result - %d\n", fl);
+    print_res(convex_polygon(&fl, 3, 0., 1., 7., 1., 5., 4.));
+    printf("%d\n", fl);
 
     // ломанная
-    printf("%d\n", convex_polygon(&fl, 4, 0., 0., 1., 1., 2., 1., 2., 6.));
-    printf("result - %d\n", fl);
+    print_res(convex_polygon(&fl, 4, 0., 0., 1., 1., 2., 1., 2., 6.));
+    printf("%d\n", fl);
 
     cnt = 4;
     if (!(res = (enum err *)malloc(sizeof(enum err) * cnt)))
@@ -403,7 +415,7 @@ int main()
         printf("Не удалось выделить память\n");
     }
     Kaprekars_num(res, 10, cnt, "1", "9", "45", "17");
-    print_res(res, cnt);
+    print_Kapric_res(res, cnt);
     free(res);
     res = NULL;
 
@@ -414,12 +426,12 @@ int main()
     }
     // сделать чтобы маленькие буквы становились большими
     Kaprekars_num(res, 10, cnt, "1", "999", "2223", "2728", "A", "922337203685477580", "33");
-    print_res(res, cnt);
+    print_Kapric_res(res, cnt);
     free(res);
     res = NULL;
 
     double c_y = 0.0;
-    count_y(&c_y, 2.0, 2, 2.0, 3.0, 4.0);
+    print_res(count_y(&c_y, 2.0, 2, 2.0, 3.0, 4.0));
     printf("%lf\n", c_y);
     return 0;
 }
