@@ -22,11 +22,11 @@ enum err
     NO
 };
 
-typedef struct point
+typedef struct Vector
 {
-    double x;
-    double y;
-} point;
+    double i;
+    double j;
+} Vector;
 
 /*
 Реализуйте функцию с переменным числом аргументов, принимающую координаты
@@ -37,65 +37,55 @@ typedef struct point
 int convex_polygon(char *fl, int cnt, ...)
 {
     va_list iter;
-    int i = 0, j = 0, line = 0;
-    double k = 0.0, k_prev = 0.0;
+    int k = 0, j = 0, cnt_neg = 0;
+    double x_pr = 0.0, y_pr = 0.0, x = 0.0, y = 0.0, x1, y1, det = 0.0;
     int cnt_low_nul = 0;
     if (cnt < 0)
     {
         return WRONG_ARG_CNT;
     }
-    point arr[cnt];
+    Vector vector_arr[cnt];
     if (fl == NULL)
     {
         return WRONG_POINTER;
     }
-    *fl = 1;
+    *fl = 0;
     va_start(iter, cnt);
-    for (i = 0; i < cnt; ++i)
+    x1 = x_pr = va_arg(iter, double);
+    y1 = y_pr = va_arg(iter, double);
+    for (k = 0; k < cnt - 1; ++k)
     {
-        arr[i].x = va_arg(iter, double);
-        arr[i].y = va_arg(iter, double);
+        x = va_arg(iter, double);
+        y = va_arg(iter, double);
+        vector_arr[k].i = x - x_pr;
+        vector_arr[k].j = y - y_pr;
+        x_pr = x;
+        y_pr = y;
     }
+    vector_arr[k].i = x1 - x_pr;
+    vector_arr[k].j = y1 - y_pr;
     va_end(iter);
-    for (i = 1; i < cnt - 1; ++i)
+    for (k = 0; k < cnt - 1; ++k)
     {
-        if (k != k_prev)
+        det = vector_arr[k].i * vector_arr[k + 1].j - vector_arr[k + 1].i * vector_arr[k].j;
+        if (fabs(det) < EPS)
         {
-            line = 1;
+            return 0;
         }
-        k_prev = k;
-        if (fabs(arr[i - 1].x - arr[i].x) <= EPS)
+        if (det < 0)
         {
-            k = 0.0;
+            cnt_neg += 1;
         }
-        else
-        {
-            k = (arr[i].y - arr[i - 1].y) / (arr[i - 1].x - arr[i].x);
-        }
-        cnt_low_nul = 0;
-        // printf("%d; k = %lf; %lf %lf %lf\n", i, k, fabs(arr[i - 1].x - arr[i].x), arr[i - 1].x, arr[i].x);
-        j = i + 1;
-        while (j != i - 1)
-        {
-            printf("j: %d ; %lf\n", j, (arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y));
-            if (((arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y) < 0) || ((fabs(arr[i - 1].y + k * (arr[j].x - arr[i - 1].x) - arr[j].y) <= EPS)))
-            {
-                ++cnt_low_nul;
-            }
-            j = (j + 1) % cnt;
-        }
-        // printf(" %d\n", cnt_low_nul);
-        if (cnt_low_nul % (cnt - 2) != 0)
-        {
-            // printf(" %d kkk\n", cnt_low_nul);
-            *fl = 0;
-            return OK;
-        }
-        if (line == 0)
-        {
-            *fl = 0;
-            return OK;
-        }
+    }
+    det = vector_arr[k].i * vector_arr[0].j - vector_arr[0].i * vector_arr[k].j;
+    if (det < 0)
+    {
+        cnt_neg += 1;
+    }
+    // printf("%d\n", cnt_neg);
+    if ((cnt_neg == cnt) || (cnt_neg == 0))
+    {
+        *fl = 1;
     }
     return OK;
 }
