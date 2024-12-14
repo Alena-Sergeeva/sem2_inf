@@ -15,9 +15,11 @@ enum err
     WRONG_POINTER,
     WRONG_ARG_CNT,
     EMPTY_STR,
+    NE_CHOT,
     WRONG_BASE,
     OVERFLOW,
     WRONG_STR,
+    POINT,
     YES,
     NO
 };
@@ -34,6 +36,11 @@ typedef struct Vector
 определяющую, является ли этот многоугольник выпуклым.
 */
 // выпуклый многоугольник
+/*
+Если определитель положителен, то тройка векторов имеет ту же ориентацию, что и система координат.
+Если определитель отрицателен, то тройка векторов имеет ориентацию, противоположную ориентации системы координат.
+Если определитель равен нулю, то векторы компланарны (линейно зависимы).
+*/
 int convex_polygon(char *fl, int cnt, ...)
 {
     va_list iter;
@@ -43,6 +50,10 @@ int convex_polygon(char *fl, int cnt, ...)
     if (cnt < 0)
     {
         return WRONG_ARG_CNT;
+    }
+    if (cnt == 1)
+    {
+        return POINT;
     }
     Vector vector_arr[cnt];
     if (fl == NULL)
@@ -82,7 +93,6 @@ int convex_polygon(char *fl, int cnt, ...)
     {
         cnt_neg += 1;
     }
-    // printf("%d\n", cnt_neg);
     if ((cnt_neg == cnt) || (cnt_neg == 0))
     {
         *fl = 1;
@@ -315,7 +325,7 @@ int Kaprekars_num(enum err *res, int base, int cnt, ...)
     return OK;
 }
 
-void print_res(enum err res)
+void print_mistake(enum err res)
 {
     switch (res)
     {
@@ -340,6 +350,12 @@ void print_res(enum err res)
     case WRONG_ARG_CNT:
         printf("Число неявных параметров функции должно быть положительным\n");
         break;
+    case POINT:
+        printf("Это точка\n");
+        break;
+    case NE_CHOT:
+        printf("Число координат должно быть чётным\n");
+        break;
     }
 }
 
@@ -347,7 +363,7 @@ void print_Kapric_res(enum err *res, int cnt)
 {
     for (int i = 0; i < cnt; ++i)
     {
-        print_res(res[i]);
+        print_mistake(res[i]);
     }
 }
 
@@ -360,23 +376,25 @@ int main()
     //  а в указанном порядке
 
     //  квадрат
-    print_res(convex_polygon(&fl, 4, 0., 0., 1., 0., 1., 1., 0., 1.));
+    print_mistake(convex_polygon(&fl, 4, 0., 0., 1., 0., 1., 1., 0., 1.));
     printf("%d\n", fl);
     // ступенька
-    print_res(convex_polygon(&fl, 6, 1., 0., 3., 0., 3., 1., 2.0, 1.0, 2., 3., 1.0, 3.));
+    print_mistake(convex_polygon(&fl, 6, 1., 0., 3., 0., 3., 1., 2.0, 1.0, 2., 3., 1.0, 3.));
     printf("%d\n", fl);
     // линия
-    print_res(convex_polygon(&fl, 3, 0., 0., 1., 1., 2., 2.));
+    print_mistake(convex_polygon(&fl, 3, 0., 0., 1., 1., 2., 2.));
     printf("%d\n", fl);
 
     // треугольник
-    print_res(convex_polygon(&fl, 3, 0., 1., 7., 1., 5., 4.));
+    print_mistake(convex_polygon(&fl, 3, 0., 1., 7., 1., 5., 4.));
     printf("%d\n", fl);
 
     // ломанная
-    print_res(convex_polygon(&fl, 4, 0., 0., 1., 1., 2., 1., 2., 6.));
+    print_mistake(convex_polygon(&fl, 4, 0., 0., 1., 1., 2., 1., 2., 6.));
     printf("%d\n", fl);
 
+    print_mistake(convex_polygon(&fl, 5, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 3.0, 3.0, 5.0, 0.0));
+    printf("%d\n", fl);
     cnt = 4;
     if (!(res = (enum err *)malloc(sizeof(enum err) * cnt)))
     {
@@ -399,7 +417,7 @@ int main()
     res = NULL;
 
     double c_y = 0.0;
-    print_res(count_y(&c_y, 2.0, 2, 2.0, 3.0, 4.0));
+    print_mistake(count_y(&c_y, 2.0, 2, 2.0, 3.0, 4.0));
     printf("%lf\n", c_y);
     return 0;
 }
