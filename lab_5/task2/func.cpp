@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cstddef>
+#include <string>
 
 #define N 256
 
@@ -16,13 +17,12 @@ class encoder
     }
     void _init(std::vector<std::byte> &S) const
     {
-        // добавить проверку на вектор нулевой длины
         int key_length = _key.size();
         if (key_length == 0)
         {
             throw std::runtime_error("Длина ключа должна быть больше 0\n");
         }
-        for (unsigned int i = 0; i <= N; ++i)
+        for (unsigned int i = 0; i < N; ++i)
         {
             S.push_back(static_cast<std::byte>(i));
         }
@@ -53,30 +53,26 @@ public:
     ~encoder() = default;
     void encode(std::string file_in, std::string file_out, bool need_deciph)
     {
-        // кинуть исключение
-        std::ifstream f_in(file_in, std::ios_base::binary | std::ios_base::in);
+        if (file_in.compare(file_out) == 0)
+        {
+            throw std::runtime_error("Имена файлов одинаковые\n");
+        }
+        std::ifstream f_in(file_in, std::ios_base::in);
         if (!f_in.is_open())
         {
             throw std::runtime_error("Не удалось открыть файл для чтения\n");
         }
-        std::ofstream f_out(file_out, std::ios_base::binary | std::ios_base::out);
-        /* Файл сосздается лишняя провека
-        if (!f_out.is_open())
-        {
-            // f_in.close();
-            throw std::runtime_error("Не удалось открыть файл для записи\n");
-        }
-        */
+        std::ofstream f_out(file_out, std::ios_base::out);
         std::vector<std::byte> S;
         this->_init(S);
-        unsigned char c;
-        while ((c = f_in.get()) && (!f_in.eof()))
+        std::byte c{0};
+        while (f_in.read((char *)&c, sizeof(std::byte)))
         {
-            std::cout << (unsigned char)c << ' ';
-            c = static_cast<unsigned char>(static_cast<std::byte>(c) ^ this->pseudo_random_generation_algorithm(S));
-            f_out.put(c);
+            c ^= this->pseudo_random_generation_algorithm(S);
+            f_out.write((char *)&c, sizeof(std::byte));
         }
 
+        need_deciph == 1 ? std::cout << "Файл декодирован\n" : std::cout << "Файл закодирован\n";
         f_out.close();
         f_in.close();
     }
@@ -99,9 +95,9 @@ int main()
     encoder second(b);
     try
     {
-        first.encode("text2.bin", "text12.bin", 0);
+        first.encode("/home/ali_/sem_2_inf/sem2_inf/lab_5/task2/images.jpg", "text1.bin", 0);
         // second.encode("text2.bin", "text3.bin", 0);
-        first.encode("text3.bin", "text4.bin", 0);
+        first.encode("text1.bin", "test3.jpg", 1);
     }
     catch (const std::runtime_error &e)
     {
