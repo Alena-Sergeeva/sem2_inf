@@ -1,8 +1,6 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <ctype.h>
 
 enum err
 {
@@ -16,7 +14,7 @@ int decomposition(double eps, double a, double **resalt, int n, ...)
     int i = 0, n_1 = n;
     double *res = NULL;
     va_list iterator;
-    va_start(iterator, n);
+
     if (resalt == NULL)
     {
         return NULL_PTR;
@@ -25,10 +23,13 @@ int decomposition(double eps, double a, double **resalt, int n, ...)
     {
         return MEMMORY_ERROR;
     }
+
+    va_start(iterator, n);
     for (i = 0; i <= n; ++i)
     {
         res[i] = va_arg(iterator, double);
     }
+    va_end(iterator);
     while (n > 0)
     {
         for (i = 1; i <= n; ++i)
@@ -48,6 +49,8 @@ int main()
     int n = 4, i = 0;
     double a = 3.0;
     double eps = 0.0001;
+
+    // может eps нужен для того чтобы сравнить с ним коэффиценты и если меньше то они равны нулю ?
     switch (decomposition(eps, a, &result, n, 2.0, -3.0, -6.0, 5.0, 6.0))
     {
     case OK:
